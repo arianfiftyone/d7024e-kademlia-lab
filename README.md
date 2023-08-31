@@ -1,6 +1,6 @@
 # D7024E Kademlia Laboration
 
-Project is written and designed by Arian Masoudi, Jesper Frisk and Astbrq Jamil. This project was made at Luleå University of Technology and is a laboration which is a part of the course D7024E Mobile and distributed 
+This project is written and designed by Arian Masoudi, Jesper Frisk and Astbrq Jamil. It was made at Luleå University of Technology and is a laboration which is a part of the course D7024E Mobile and distributed computing systems. 
 
 ## Project description
 This project consists simulating network communication between nodes by implementing the Kademlia P2P DHT network structure.
@@ -20,11 +20,6 @@ Todo
 List the docker containers
 ```
 docker ps
-```
-
-Attach to a running container
-```
-docker attach "ContainerId"
 ```
 
 ## Test
