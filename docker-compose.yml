@@ -1,0 +1,23 @@
+
+version: "3"
+services:
+  kademlia-node:
+    build:
+      context: ./kademlia-node
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+    deploy:
+      mode: replicated
+      replicas: 50
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+    networks:
+      - kademlia_network
+      
+networks:
+  kademlia_network:
+
