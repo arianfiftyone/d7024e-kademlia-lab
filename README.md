@@ -1,7 +1,4 @@
-# d7024e-kademlia-lab
-
-![Go]()
-[![GitHub license]()
+# D7024E Kademlia Laboration
 
 Project is written and designed by Arian Masoudi, Jesper Frisk and Astbrq Jamil. This project was made at Luleå University of Technology and is a laboration which is a part of the course D7024E Mobile and distributed 
 
