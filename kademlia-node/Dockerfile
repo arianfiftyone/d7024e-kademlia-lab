@@ -1,7 +1,7 @@
 FROM golang:1.19
 
 RUN apt-get update 
-RUN apt-get install iputils-ping
+RUN apt-get install iputils-ping -y
 
 WORKDIR /kademlia-node
 
