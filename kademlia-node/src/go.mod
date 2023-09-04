@@ -1,3 +1,3 @@
-module github.com/arianfiftyone/d7024e-kademlia-lab
+module github.com/arianfiftyone/src
 
 go 1.21

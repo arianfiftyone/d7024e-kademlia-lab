@@ -1,14 +1,13 @@
 package main
 
 import (
+	"github.com/arianfiftyone/src/kademlia"
 	"fmt"
-	"time"
 )
 
-func main() {
-	for true {
-		time.Sleep(time.Second)
-		fmt.Println("Hello, World!")
 
-	}
+func main() {
+	fmt.Printf("Starting node...\n")
+	kademlia.Listen("0.0.0.0", 3000)
+
 }
