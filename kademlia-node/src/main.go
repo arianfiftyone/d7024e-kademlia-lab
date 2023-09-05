@@ -1,13 +1,17 @@
 package main
 
 import (
-	"github.com/arianfiftyone/src/kademlia"
 	"fmt"
-)
 
+	"github.com/arianfiftyone/src/kademlia"
+)
 
 func main() {
 	fmt.Printf("Starting node...\n")
-	kademlia.Listen("0.0.0.0", 3000)
+	err := kademlia.Listen("", 3000)
+	if err != nil {
+		panic(err)
+
+	}
 
 }
