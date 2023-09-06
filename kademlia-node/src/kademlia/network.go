@@ -1,13 +1,19 @@
 package kademlia
 
 import (
+	"bufio"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
-	"strings"
+	"time"
 )
 
 type Network struct {
+	ip             string
+	port           int
+	messageHandler *MessageHandler
 }
 
 func Listen(ip string, port int) error {
@@ -25,28 +31,104 @@ func Listen(ip string, port int) error {
 	if err != nil {
 		return err
 	}
-	localIp, err := net.LookupIP(hostname)
+	ips, err := net.LookupIP(hostname)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("server listening %s\n", localIp[0])
+	fmt.Printf("server listening %s\n", ips[0])
+
+	network := &Network{
+		ips[0].String(),
+		port,
+		&MessageHandler{},
+	}
 
 	for {
-		data := make([]byte, 20)
-		rlen, remote, err := conn.ReadFromUDP(data[:])
+		data := make([]byte, 1024)
+		len, remote, err := conn.ReadFromUDP(data[:])
 		if err != nil {
 			return err
 		}
 
-		message := strings.TrimSpace(string(data[:rlen]))
-		fmt.Printf("received: %s from %s\n", message, remote)
+		go func(myConn *net.UDPConn) {
+			response := network.messageHandler.HandleMessage(data[:len])
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			myConn.WriteToUDP([]byte(string(response)+"\n"), remote)
+
+		}(conn)
+
 	}
 
 }
 
-func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO
+func (network *Network) Send(ip string, port int, message []byte, timeOut time.Duration) ([]byte, error) {
+	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
+		IP:   net.ParseIP(ip),
+		Port: port,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Send a message to the server
+	_, err = conn.Write(message)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	responseChannel := make(chan []byte)
+	go func() {
+		// Read from the connection untill a new line is send
+		data, _ := bufio.NewReader(conn).ReadString('\n')
+		responseChannel <- []byte(data)
+
+	}()
+
+	select {
+	case response := <-responseChannel:
+		return response, nil
+	case <-time.After(timeOut):
+		return nil, errors.New("Time Out Error")
+
+	}
+
+}
+
+func (network *Network) SendPingMessage(contact *Contact) bool {
+	ping := NewPingMessage(network.ip)
+	bytes, err := json.Marshal(ping)
+	if err != nil {
+		return false
+	}
+
+	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
+	if err != nil {
+		fmt.Println("Ping failed: " + err.Error())
+		return false
+	}
+	var message Message
+	errUnmarshal := json.Unmarshal(response, &message)
+	if errUnmarshal != nil || message.MessageType != PONG {
+		fmt.Println("Ping failed")
+		return false
+	}
+
+	var pong Pong
+
+	errUnmarshalAckPing := json.Unmarshal(response, &pong)
+	if errUnmarshalAckPing != nil {
+		fmt.Println("Ping failed: " + errUnmarshalAckPing.Error())
+		return false
+	}
+
+	fmt.Println(pong.FromAddress + " acknowledged your ping")
+	return true
+
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
