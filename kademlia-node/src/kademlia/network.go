@@ -113,20 +113,20 @@ func (network *Network) SendPingMessage(contact *Contact) bool {
 	}
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
-	if errUnmarshal != nil || message.MessageType != ACK_PING {
+	if errUnmarshal != nil || message.MessageType != PONG {
 		fmt.Println("Ping failed")
 		return false
 	}
 
-	var ackPing AckPing
+	var pong Pong
 
-	errUnmarshalAckPing := json.Unmarshal(response, &ackPing)
+	errUnmarshalAckPing := json.Unmarshal(response, &pong)
 	if errUnmarshalAckPing != nil {
 		fmt.Println("Ping failed: " + errUnmarshalAckPing.Error())
 		return false
 	}
 
-	fmt.Println(ackPing.FromAddress + " acknowledged your ping")
+	fmt.Println(pong.FromAddress + " acknowledged your ping")
 	return true
 
 }

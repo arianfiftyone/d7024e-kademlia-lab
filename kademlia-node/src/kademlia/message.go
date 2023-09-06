@@ -3,9 +3,9 @@ package kademlia
 type MessageType string
 
 const (
-	ERROR    MessageType = "ERROR"
-	PING     MessageType = "PING"
-	ACK_PING MessageType = "ACK_PING"
+	ERROR MessageType = "ERROR"
+	PING  MessageType = "PING"
+	PONG  MessageType = "PONG"
 )
 
 type Message struct {
@@ -40,16 +40,16 @@ func NewPingMessage(fromAddress string) Ping {
 	}
 }
 
-type AckPing struct {
+type Pong struct {
 	Message
 	FromAddress string `json:"fromAddress"`
 }
 
-func NewAckPingMessage(fromAddress string) AckPing {
+func NewAckPingMessage(fromAddress string) Pong {
 	message := Message{
-		MessageType: ACK_PING,
+		MessageType: PONG,
 	}
-	return AckPing{
+	return Pong{
 		message,
 		fromAddress,
 	}
