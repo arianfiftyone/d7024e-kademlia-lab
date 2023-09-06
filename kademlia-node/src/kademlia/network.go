@@ -6,43 +6,28 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"time"
 )
 
 type Network struct {
-	ip             string
-	port           int
-	messageHandler *MessageHandler
+	Ip             string
+	Port           int
+	MessageHandler *MessageHandler
 }
 
-func Listen(ip string, port int) error {
+func (network *Network) Listen() error {
 	// listen to incoming udp packets
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   net.ParseIP(ip),
-		Port: port,
+		IP:   net.ParseIP(network.Ip),
+		Port: network.Port,
 	})
 	if err != nil {
 		return err
 	}
 
 	defer conn.Close()
-	hostname, err := os.Hostname()
-	if err != nil {
-		return err
-	}
-	ips, err := net.LookupIP(hostname)
-	if err != nil {
-		return err
-	}
 
-	fmt.Printf("server listening %s\n", ips[0])
-
-	network := &Network{
-		ips[0].String(),
-		port,
-		&MessageHandler{},
-	}
+	fmt.Printf("server listening %s\n", network.Ip)
 
 	for {
 		data := make([]byte, 1024)
@@ -52,7 +37,7 @@ func Listen(ip string, port int) error {
 		}
 
 		go func(myConn *net.UDPConn) {
-			response := network.messageHandler.HandleMessage(data[:len])
+			response := network.MessageHandler.HandleMessage(data[:len])
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -100,7 +85,7 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 }
 
 func (network *Network) SendPingMessage(contact *Contact) bool {
-	ping := NewPingMessage(network.ip)
+	ping := NewPingMessage(network.Ip)
 	bytes, err := json.Marshal(ping)
 	if err != nil {
 		return false
