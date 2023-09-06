@@ -8,6 +8,7 @@ import (
 )
 
 type MessageHandler struct {
+	kademliaNode *KademliaNode
 }
 
 func (messageHandler *MessageHandler) HandleMessage(rawMessage []byte) []byte {
