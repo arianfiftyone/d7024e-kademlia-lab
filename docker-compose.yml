@@ -19,6 +19,7 @@ services:
       - kademlia_network
     environment:
       - CONTAINER_NODE=bootstrap-node
+      - NODE_PORT=3000
       - IS_BOOTSTRAP=true
 
   kademlia-node:
@@ -40,6 +41,7 @@ services:
     environment:
       - CONTAINER_NODE=kademlia-node
       - BOOSTRAP_NODE=bootstrap-node
+      - NODE_PORT=3000
       - IS_BOOTSTRAP=false
       
 networks:
