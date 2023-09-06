@@ -1,6 +1,26 @@
 
 version: "3"
 services:
+  bootstrap-node:
+    build:
+      context: ./kademlia-node
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+    networks:
+      - kademlia_network
+    environment:
+      - CONTAINER_NODE=bootstrap-node
+      - IS_BOOTSTRAP=true
+
   kademlia-node:
     build:
       context: ./kademlia-node
@@ -14,10 +34,13 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
-        window: 10s
+        window: 10s    
     networks:
       - kademlia_network
+    environment:
+      - CONTAINER_NODE=kademlia-node
+      - BOOSTRAP_NODE=bootstrap-node
+      - IS_BOOTSTRAP=false
       
 networks:
   kademlia_network:
-
