@@ -9,13 +9,14 @@ import (
 // stores the KademliaID, the ip address and the distance
 type Contact struct {
 	ID       *KademliaID
-	Address  string
+	Ip       string
+	Port     int
 	distance *KademliaID
 }
 
 // NewContact returns a new instance of a Contact
-func NewContact(id *KademliaID, address string) Contact {
-	return Contact{id, address, nil}
+func NewContact(id *KademliaID, ip string, port int) Contact {
+	return Contact{id, ip, port, nil}
 }
 
 // CalcDistance calculates the distance to the target and
@@ -31,7 +32,7 @@ func (contact *Contact) Less(otherContact *Contact) bool {
 
 // String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
-	return fmt.Sprintf(`contact("%s", "%s")`, contact.ID, contact.Address)
+	return fmt.Sprintf(`contact("%s", "%s")`, contact.ID, contact.Ip)
 }
 
 // ContactCandidates definition

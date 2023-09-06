@@ -8,6 +8,7 @@ import (
 
 func main() {
 	fmt.Printf("Starting node...\n")
+
 	err := kademlia.Listen("", 3000)
 	if err != nil {
 		panic(err)
