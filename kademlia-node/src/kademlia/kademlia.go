@@ -41,5 +41,5 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	// TODO
+	// A node finds k nodes to check if they are close to the hash
 }
