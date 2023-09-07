@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+const (
+	NumberOfClosestNodesToRetrieved = 3
+)
+
 type KademliaNode struct {
 	RoutingTable *RoutingTable
 }

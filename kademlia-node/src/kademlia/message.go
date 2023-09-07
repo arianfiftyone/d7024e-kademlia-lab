@@ -56,17 +56,17 @@ func NewAckPingMessage(fromAddress string) Pong {
 	}
 }
 
-type Find_Node struct {
+type FindNode struct {
 	Message
 	FromAddress string `json:"fromAddress"`
 	ID          *KademliaID
 }
 
-func NewFindNodeMessage(fromAddress string, id *KademliaID) Find_Node {
+func NewFindNodeMessage(fromAddress string, id *KademliaID) FindNode {
 	message := Message{
 		MessageType: FIND_NODE,
 	}
-	return Find_Node{
+	return FindNode{
 		message,
 		fromAddress,
 		id,
