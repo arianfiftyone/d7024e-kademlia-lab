@@ -14,7 +14,7 @@ func NewKademlia(ip string, port int) *Kademlia {
 	network := Network{
 		ip,
 		port,
-		&MessageHandler{
+		&MessageHandlerImplementation{
 			kademliaNode,
 		},
 	}

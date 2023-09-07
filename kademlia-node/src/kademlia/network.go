@@ -12,7 +12,7 @@ import (
 type Network struct {
 	Ip             string
 	Port           int
-	MessageHandler *MessageHandler
+	MessageHandler MessageHandler
 }
 
 func (network *Network) Listen() error {
@@ -27,7 +27,7 @@ func (network *Network) Listen() error {
 
 	defer conn.Close()
 
-	fmt.Printf("server listening %s\n", network.Ip)
+	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
 
 	for {
 		data := make([]byte, 1024)
