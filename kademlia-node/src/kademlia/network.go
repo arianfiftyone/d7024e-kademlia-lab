@@ -29,11 +29,6 @@ func (network *Network) Listen() error {
 
 	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
 
-	contact := NewContact(NewRandomKademliaID(), network.Ip, network.Port)
-	go func() {
-		network.SendFindDataMessage(&contact, HashToKey("value"))
-	}()
-
 	for {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
@@ -155,11 +150,9 @@ func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Conta
 
 	var data string
 	json.Unmarshal(response, &data)
-	fmt.Println("hello3:" + data)
 	if data == "" {
 		var arrayOfContacts []Contact
 		json.Unmarshal(response, &arrayOfContacts)
-
 		return arrayOfContacts, "", nil
 	} else {
 		return nil, data, nil
