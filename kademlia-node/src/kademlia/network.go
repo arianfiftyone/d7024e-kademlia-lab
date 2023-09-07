@@ -160,6 +160,24 @@ func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Conta
 
 }
 
-func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+func (network *Network) SendStoreMessage(contact *Contact, value string, key *Key) bool {
+	store := NewStoreMessage(network.Ip, key, contact.ID, value)
+	bytes, err := json.Marshal(store)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
+	if err != nil {
+		fmt.Errorf("Store failed: %v", err)
+	}
+
+	var storeResponse StoreResponse
+	err = json.Unmarshal(response, &storeResponse)
+	if err != nil {
+		return false
+	}
+
+	return storeResponse.StoreSuccess
+
 }

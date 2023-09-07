@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 )
 
 type MessageHandler interface {
@@ -69,18 +70,36 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
 			bytes, err2 := json.Marshal(closestKNodesList)
 			if err2 != nil {
-				fmt.Print(err2)
+				fmt.Println(err2)
 			}
 			return bytes
 
 		} else {
 			bytes, err3 := json.Marshal(data)
 			if err3 != nil {
-				fmt.Print(err3)
+				fmt.Println(err3)
 			}
 
 			return bytes
 		}
+
+	case STORE:
+		var store Store
+
+		json.Unmarshal(rawMessage, &store)
+
+		messageHandler.kademliaNode.DataStore.Insert(store.Key, store.Value)
+
+		// unnecessary print
+		fmt.Println(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
+
+		newStoreResponse := NewStoreResponseMessage()
+		bytes, err := json.Marshal(newStoreResponse)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		return bytes
 
 	default:
 		errorMessage := NewErrorMessage()
