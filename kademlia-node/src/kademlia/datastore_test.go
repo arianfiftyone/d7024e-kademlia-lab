@@ -18,25 +18,25 @@ func TestNewDataStore(t *testing.T) {
 func TestInsert(t *testing.T) {
 	dataStore := NewDataStore()
 
-	key := NewRandomKademliaID()
 	value := string("testValue")
+	key := HashToKey(value)
 
-	dataStore.Insert(*key, value)
+	dataStore.Insert(key, value)
 
-	if !reflect.DeepEqual(dataStore.data[*key], value) {
-		t.Errorf("Insert: Expected %v, got %v", value, dataStore.data[*key])
+	if !reflect.DeepEqual(dataStore.data[key], value) {
+		t.Errorf("Insert: Expected %v, got %v", value, dataStore.data[key])
 	}
 }
 
 func TestInsertAndGet(t *testing.T) {
 	dataStore := NewDataStore()
 
-	key := NewRandomKademliaID()
 	value := "testValue"
+	key := HashToKey(value)
 
-	dataStore.Insert(*key, value)
+	dataStore.Insert(key, value)
 
-	retrievedValue, err := dataStore.Get(*key)
+	retrievedValue, err := dataStore.Get(key)
 	if err != nil {
 		t.Errorf("Get: Unexpected error: %v", err)
 	}
@@ -46,8 +46,9 @@ func TestInsertAndGet(t *testing.T) {
 	}
 
 	// Test case for a non-existent key
-	nonExistentKey := NewRandomKademliaID() // refers to key that has not been previously inserted into data store
-	_, err = dataStore.Get(*nonExistentKey)
+	value2 := "testValue2" // refers to key that has not been previously inserted into data store
+	keyNotExisting := HashToKey(value2)
+	_, err = dataStore.Get(keyNotExisting)
 	if err == nil {
 		t.Errorf("Get: Expected error for non-existent key, but got none")
 	}

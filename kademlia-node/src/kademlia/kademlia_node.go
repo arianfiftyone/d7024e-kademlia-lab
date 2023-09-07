@@ -11,6 +11,7 @@ const (
 
 type KademliaNode struct {
 	RoutingTable *RoutingTable
+	DataStore    *DataStore
 }
 
 func NewKademliaNode(ip string, port int) *KademliaNode {
@@ -32,7 +33,11 @@ func NewKademliaNode(ip string, port int) *KademliaNode {
 	// Create a new RoutingTable instance and add the initial contact
 	routingTable = NewRoutingTable(contact)
 
+	// Create new DataStore instance
+	dataStore := NewDataStore()
+
 	return &KademliaNode{
 		RoutingTable: routingTable,
+		DataStore:    &dataStore,
 	}
 }
