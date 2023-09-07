@@ -7,11 +7,15 @@ import (
 	"os"
 )
 
-type MessageHandler struct {
+type MessageHandler interface {
+	HandleMessage(rawMessage []byte) []byte
+}
+
+type MessageHandlerImplementation struct {
 	kademliaNode *KademliaNode
 }
 
-func (messageHandler *MessageHandler) HandleMessage(rawMessage []byte) []byte {
+func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []byte) []byte {
 	var message Message
 	err := json.Unmarshal(rawMessage, &message)
 	if err != nil {
