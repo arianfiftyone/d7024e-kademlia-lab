@@ -113,3 +113,46 @@ func TestClient(t *testing.T) {
 	fmt.Println(message)
 	assert.True(t, message.MessageType == OK_MESSAGE, "Communication message must be an OK message!")
 }
+
+type MockMessageHandler2 struct {
+}
+
+func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) []byte {
+	var findN FindNode
+
+	json.Unmarshal(rawMessage, &findN)
+	if findN.MessageType == FIND_NODE {
+		var arrayC [1]Contact
+		arrayC[0] = NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)
+		bytes, _ := json.Marshal(arrayC)
+		return bytes
+
+	} else {
+		return make([]byte, 0)
+
+	}
+}
+
+func TestSendNodeContactMessage(t *testing.T) {
+	// Create a mock Contact for testing
+	mockContact := Contact{
+		ID:       NewRandomKademliaID(),
+		Ip:       "127.0.0.1",
+		Port:     5000,
+		distance: nil,
+	}
+
+	// Create a mock Network instance
+	mockNetwork := &Network{
+		Ip:             "127.0.0.1",
+		Port:           5000,
+		MessageHandler: &MockMessageHandler2{},
+	}
+
+	go mockNetwork.Listen()
+	time.Sleep(time.Second * 5)
+
+	response, _ := mockNetwork.SendFindContactMessage(&mockContact)
+	println(response)
+	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
+}
