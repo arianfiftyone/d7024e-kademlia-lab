@@ -39,6 +39,21 @@ func (messageHandler *MessageHandler) HandleMessage(rawMessage []byte) []byte {
 
 		return bytes
 
+	case FIND_NODE:
+		var findN Find_Node
+
+		json.Unmarshal(rawMessage, &findN)
+		fmt.Println(findN.ID)
+
+		fmt.Println(findN.FromAddress + " wants to find your k closest nodes.")
+		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, 3)
+		bytes, err := json.Marshal(closestKNodesList)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		return bytes
+
 	default:
 		errorMessage := NewErrorMessage()
 		bytes, err := json.Marshal(errorMessage)

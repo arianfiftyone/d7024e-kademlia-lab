@@ -3,9 +3,10 @@ package kademlia
 type MessageType string
 
 const (
-	ERROR MessageType = "ERROR"
-	PING  MessageType = "PING"
-	PONG  MessageType = "PONG"
+	ERROR     MessageType = "ERROR"
+	PING      MessageType = "PING"
+	PONG      MessageType = "PONG"
+	FIND_NODE MessageType = "FIND_NODE"
 )
 
 type Message struct {
@@ -52,5 +53,22 @@ func NewAckPingMessage(fromAddress string) Pong {
 	return Pong{
 		message,
 		fromAddress,
+	}
+}
+
+type Find_Node struct {
+	Message
+	FromAddress string `json:"fromAddress"`
+	ID          *KademliaID
+}
+
+func NewFindNodeMessage(fromAddress string, id *KademliaID) Find_Node {
+	message := Message{
+		MessageType: FIND_NODE,
+	}
+	return Find_Node{
+		message,
+		fromAddress,
+		id,
 	}
 }

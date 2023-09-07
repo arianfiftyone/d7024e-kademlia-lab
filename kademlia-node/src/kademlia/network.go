@@ -116,8 +116,22 @@ func (network *Network) SendPingMessage(contact *Contact) bool {
 
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
-	// TODO
+func (network *Network) SendFindContactMessage(contact *Contact) bool {
+	findN := NewFindNodeMessage(network.Ip, contact.ID)
+	bytes, err := json.Marshal(findN)
+	if err != nil {
+		return false
+	}
+
+	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
+	if err != nil {
+		fmt.Println("Find node failed: " + err.Error())
+		return false
+	}
+
+	fmt.Println(string(response))
+
+	return true
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
