@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type MockMessageHandler struct{}
 
 const OK_MESSAGE MessageType = "OK"
 
@@ -29,6 +28,8 @@ func NewOkMessage(debugMessage string) OkMessage {
 		debugMessage,
 	}
 }
+
+type MockMessageHandler struct{}
 
 func (messageHandler *MockMessageHandler) HandleMessage(rawMessage []byte) []byte {
 	var message Message
@@ -93,7 +94,7 @@ func TestServer(t *testing.T) {
 func TestClient(t *testing.T) {
 	network := Network{
 		"localhost",
-		3000,
+		4000,
 		&MockMessageHandler{},
 	}
 
@@ -150,9 +151,101 @@ func TestSendNodeContactMessage(t *testing.T) {
 	}
 
 	go mockNetwork.Listen()
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second)
 
 	response, _ := mockNetwork.SendFindContactMessage(&mockContact)
-	println(response)
+	println("First contact: " + response[0].ID.String())
 	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
+}
+
+type MockSlowMessageHandler struct{}
+
+func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) []byte {
+	var message Message
+	json.Unmarshal(rawMessage, &message)
+	fmt.Println(message.MessageType)
+	time.Sleep(time.Second * 5)
+	if message.MessageType != "" {
+		ok := NewOkMessage("")
+		bytes, _ := json.Marshal(ok)
+		return bytes
+
+	} else {
+		return make([]byte, 0)
+
+	}
+}
+func TestTimeout(t *testing.T) {
+	network := Network{
+		"localhost",
+		6000,
+		&MockSlowMessageHandler{},
+	}
+
+	go network.Listen()
+	time.Sleep(time.Second)
+
+	ping := NewPingMessage(network.Ip)
+	bytes, _ := json.Marshal(ping)
+	_, err := network.Send(network.Ip, network.Port, bytes, time.Second*3)
+	fmt.Println(err)
+	assert.EqualError(t, err, "Time Out Error")
+
+}
+
+type MockMessageHandlerConcurrentSend struct{}
+
+func (messageHandler *MockMessageHandlerConcurrentSend) HandleMessage(rawMessage []byte) []byte {
+	var message Message
+	json.Unmarshal(rawMessage, &message)
+	if message.MessageType == OK_MESSAGE {
+		var okMessage OkMessage
+		json.Unmarshal(rawMessage, &okMessage)
+		fmt.Println(okMessage)
+		bytes, _ := json.Marshal(okMessage)
+		return bytes
+
+	} else {
+		return make([]byte, 0)
+
+	}
+}
+
+func (network *Network) sendOkMessage(t *testing.T, startNumber int) {
+	debugMessage := "Start number: " + strconv.Itoa(startNumber)
+	outMessage := NewOkMessage("Start number: " + strconv.Itoa(startNumber))
+	bytes, _ := json.Marshal(outMessage)
+
+	response, err := network.Send(network.Ip, network.Port, bytes, time.Second*3)
+
+	if err != nil {
+		assert.Fail(t, "Error sending message!: "+err.Error())
+	}
+
+	var inMessage OkMessage
+	json.Unmarshal(response, &inMessage)
+	fmt.Println("Expected message: " + debugMessage + ", In message: " + inMessage.DebugMessage)
+
+	assert.True(t, inMessage.DebugMessage == debugMessage, "Communication message must be: "+debugMessage)
+}
+
+func TestConcurrentSends(t *testing.T) {
+	network := Network{
+		"localhost",
+		7000,
+		&MockMessageHandlerConcurrentSend{},
+	}
+
+	go network.Listen()
+
+	time.Sleep(time.Second)
+
+	i := 1
+	for i < 10 {
+		go network.sendOkMessage(t, i)
+		i += 1
+	}
+
+	time.Sleep(time.Second)
+
 }
