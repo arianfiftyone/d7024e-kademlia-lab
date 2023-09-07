@@ -29,6 +29,11 @@ func (network *Network) Listen() error {
 
 	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
 
+	contact := NewContact(NewRandomKademliaID(), network.Ip, network.Port)
+	go func() {
+		network.SendFindDataMessage(&contact, HashToKey("value"))
+	}()
+
 	for {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
@@ -135,8 +140,31 @@ func (network *Network) SendFindContactMessage(contact *Contact) ([]Contact, err
 	return arrayOfContacts, nil
 }
 
-func (network *Network) SendFindDataMessage(hash string) {
-	// TODO
+func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Contact, string, error) {
+	findData := NewFindDataMessage(network.Ip, contact.ID, key)
+	bytes, err := json.Marshal(findData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
+	if err != nil {
+		fmt.Println("Find data failed: " + err.Error())
+		return nil, "", err
+	}
+
+	var data string
+	json.Unmarshal(response, &data)
+	fmt.Println("hello3:" + data)
+	if data == "" {
+		var arrayOfContacts []Contact
+		json.Unmarshal(response, &arrayOfContacts)
+
+		return arrayOfContacts, "", nil
+	} else {
+		return nil, data, nil
+	}
+
 }
 
 func (network *Network) SendStoreMessage(data []byte) {

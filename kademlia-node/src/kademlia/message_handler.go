@@ -57,6 +57,37 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		return bytes
 
+	case FIND_DATA:
+		fmt.Println("helloP")
+		var findData FindData
+
+		json.Unmarshal(rawMessage, &findData)
+
+		//contact := NewContact(NewRandomKademliaID(), findData.FromAddress, 3000)
+		//messageHandler.kademliaNode.RoutingTable.AddContact(contact)
+		messageHandler.kademliaNode.DataStore.Insert(findData.Key, "value")
+
+		fmt.Println(findData.FromAddress + " wants to find a value.")
+		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
+		if err != nil {
+			fmt.Println("hello")
+			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
+			bytes, err2 := json.Marshal(closestKNodesList)
+			if err2 != nil {
+				fmt.Errorf("error: %v", err2)
+			}
+			fmt.Println("hellooo")
+			return bytes
+
+		} else {
+			bytes, err3 := json.Marshal(data)
+			if err3 != nil {
+				fmt.Errorf("error2132: %v", err3)
+			}
+			fmt.Println("hello2")
+			return bytes
+		}
+
 	default:
 		errorMessage := NewErrorMessage()
 		bytes, err := json.Marshal(errorMessage)

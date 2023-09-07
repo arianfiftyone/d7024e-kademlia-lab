@@ -7,6 +7,7 @@ const (
 	PING      MessageType = "PING"
 	PONG      MessageType = "PONG"
 	FIND_NODE MessageType = "FIND_NODE"
+	FIND_DATA MessageType = "FIND_DATA"
 )
 
 type Message struct {
@@ -70,5 +71,24 @@ func NewFindNodeMessage(fromAddress string, id *KademliaID) FindNode {
 		message,
 		fromAddress,
 		id,
+	}
+}
+
+type FindData struct {
+	Message
+	FromAddress string `json:"fromAddress"`
+	ID          *KademliaID
+	Key         *Key
+}
+
+func NewFindDataMessage(fromAddress string, id *KademliaID, key *Key) FindData {
+	message := Message{
+		MessageType: FIND_DATA,
+	}
+	return FindData{
+		message,
+		fromAddress,
+		id,
+		key,
 	}
 }
