@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -57,9 +56,13 @@ func mockSend(t *testing.T, ip string, port int, message []byte, timeOut time.Du
 
 	responseChannel := make(chan []byte)
 	go func() {
-		// Read from the connection untill a new line is send
-		data, _ := bufio.NewReader(conn).ReadString('\n')
-		responseChannel <- []byte(data)
+		// Read from the connection
+		data := make([]byte, 1024)
+		len, _, err := conn.ReadFromUDP(data[:])
+		if err != nil {
+			return
+		}
+		responseChannel <- data[:len]
 
 	}()
 

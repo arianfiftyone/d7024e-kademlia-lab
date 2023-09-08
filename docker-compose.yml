@@ -18,9 +18,16 @@ services:
     networks:
       - kademlia_network
     environment:
-      - CONTAINER_NODE=bootstrap-node
       - NODE_PORT=3000
       - IS_BOOTSTRAP=true
+    ports:
+      - "127.0.0.1:80:80"
+    healthcheck:
+      test: curl --fail http://localhost:80 || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
 
   kademlia-node:
     build:
@@ -38,11 +45,16 @@ services:
         window: 10s    
     networks:
       - kademlia_network
+    external_links:
+        - bootstrap-node:bootstrap-node
     environment:
-      - CONTAINER_NODE=kademlia-node
-      - BOOSTRAP_NODE=bootstrap-node
+      - BOOSTRAP_NODE_HOSTNAME=bootstrap-node
+      - BOOSTRAP_NODE_PORT=3000
       - NODE_PORT=3000
       - IS_BOOTSTRAP=false
+    depends_on:
+      bootstrap-node:
+        condition: service_healthy
       
 networks:
   kademlia_network:

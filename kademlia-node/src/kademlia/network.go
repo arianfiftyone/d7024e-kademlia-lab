@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,6 +31,7 @@ func (network *Network) Listen() error {
 	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
 
 	for {
+		fmt.Println("New listener...")
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
 		if err != nil {
@@ -45,7 +45,7 @@ func (network *Network) Listen() error {
 				log.Printf("Failed to handle response message: %v\n", err)
 				return
 			}
-			myConn.WriteToUDP([]byte(string(response)+"\n"), remote)
+			myConn.WriteToUDP(response, remote)
 
 		}(conn)
 
@@ -73,9 +73,13 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 
 	responseChannel := make(chan []byte)
 	go func() {
-		// Read from the connection untill a new line is send
-		data, _ := bufio.NewReader(conn).ReadString('\n')
-		responseChannel <- []byte(data)
+		// Read from the connection
+		data := make([]byte, 1024)
+		len, _, err := conn.ReadFromUDP(data[:])
+		if err != nil {
+			return
+		}
+		responseChannel <- data[:len]
 
 	}()
 

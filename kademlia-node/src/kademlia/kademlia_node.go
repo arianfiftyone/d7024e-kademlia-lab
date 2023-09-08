@@ -1,10 +1,5 @@
 package kademlia
 
-import (
-	"os"
-	"strings"
-)
-
 const (
 	NumberOfClosestNodesToRetrieved = 3
 )
@@ -14,14 +9,11 @@ type KademliaNode struct {
 	DataStore    *DataStore
 }
 
-func NewKademliaNode(ip string, port int) *KademliaNode {
+func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNode {
 	var routingTable *RoutingTable
 	var kademliaID KademliaID
 
-	IS_BOOTSTRAP_STR := os.Getenv("IS_BOOTSTRAP")
-	IS_BOOTSTRAP := strings.ToLower(IS_BOOTSTRAP_STR) == "true"
-
-	if IS_BOOTSTRAP {
+	if isBootstrap {
 		kademliaID = *NewKademliaID(BootstrapKademliaID)
 	} else {
 		kademliaID = *NewRandomKademliaID()
