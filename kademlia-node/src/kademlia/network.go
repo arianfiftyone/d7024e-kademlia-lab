@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"time"
 )
@@ -22,6 +23,7 @@ func (network *Network) Listen() error {
 		Port: network.Port,
 	})
 	if err != nil {
+		log.Printf("Failed to listen for UDP packets: %v\n", err)
 		return err
 	}
 
@@ -33,13 +35,14 @@ func (network *Network) Listen() error {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
 		if err != nil {
+			log.Printf("Failed to read from UDP: %v\n", err)
 			return err
 		}
 
 		go func(myConn *net.UDPConn) {
-			response := network.MessageHandler.HandleMessage(data[:len])
+			response, err := network.MessageHandler.HandleMessage(data[:len])
 			if err != nil {
-				fmt.Println(err)
+				log.Printf("Failed to handle response message: %v\n", err)
 				return
 			}
 			myConn.WriteToUDP([]byte(string(response)+"\n"), remote)
@@ -57,13 +60,15 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 	})
 
 	if err != nil {
+		log.Printf("Failed to connect via UDP: %v\n", err)
 		return nil, err
 	}
 
 	// Send a message to the server
 	_, err = conn.Write(message)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("Failed to send a message to the server: %v\n", err)
+		return nil, err
 	}
 
 	responseChannel := make(chan []byte)
@@ -78,41 +83,42 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 	case response := <-responseChannel:
 		return response, nil
 	case <-time.After(timeOut):
-		return nil, errors.New("Time Out Error")
+		return nil, errors.New("time out error")
 
 	}
 
 }
 
-func (network *Network) SendPingMessage(contact *Contact) bool {
+func (network *Network) SendPingMessage(contact *Contact) error {
 	ping := NewPingMessage(network.Ip)
 	bytes, err := json.Marshal(ping)
 	if err != nil {
-		return false
+		log.Printf("Failed to send ping message to the server: %v\n", err)
+		return err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		fmt.Println("Ping failed: " + err.Error())
-		return false
+		log.Printf("Ping failed: %v\n", err)
+		return err
 	}
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != PONG {
-		fmt.Println("Ping failed")
-		return false
+		log.Printf("Ping failed: %v\n", errUnmarshal)
+		return errUnmarshal
 	}
 
 	var pong Pong
 
 	errUnmarshalAckPing := json.Unmarshal(response, &pong)
 	if errUnmarshalAckPing != nil {
-		fmt.Println("Ping failed: " + errUnmarshalAckPing.Error())
-		return false
+		log.Printf("Ping failed: %v\n", errUnmarshalAckPing)
+		return errUnmarshalAckPing
 	}
 
 	fmt.Println(pong.FromAddress + " acknowledged your ping")
-	return true
+	return nil
 
 }
 
@@ -120,12 +126,13 @@ func (network *Network) SendFindContactMessage(contact *Contact) ([]Contact, err
 	findN := NewFindNodeMessage(network.Ip, contact.ID)
 	bytes, err := json.Marshal(findN)
 	if err != nil {
+		log.Printf("Error when marshaling `findN`: %v\n", err)
 		return nil, err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		fmt.Println("Find node failed: " + err.Error())
+		log.Printf("Find node failed: %v\n", err)
 		return nil, err
 	}
 
@@ -144,7 +151,7 @@ func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Conta
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		fmt.Println("Find data failed: " + err.Error())
+		log.Printf("Find data failed: %v\n", err)
 		return nil, "", err
 	}
 
@@ -160,21 +167,25 @@ func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Conta
 
 }
 
-func (network *Network) SendStoreMessage(contact *Contact, value string, key *Key) bool {
+func (network *Network) SendStoreMessage(contact *Contact, value string) bool {
+	key := HashToKey(value)
 	store := NewStoreMessage(network.Ip, key, contact.ID, value)
 	bytes, err := json.Marshal(store)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("Error when marshaling `store` message: %v\n", err)
+		return false
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		fmt.Errorf("Store failed: %v", err)
+		log.Printf("Store failed: %v\n", err)
+		return false
 	}
 
 	var storeResponse StoreResponse
 	err = json.Unmarshal(response, &storeResponse)
 	if err != nil {
+		log.Printf("Error when unmarshaling `storeResponse` message: %v\n", err)
 		return false
 	}
 

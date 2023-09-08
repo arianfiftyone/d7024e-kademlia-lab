@@ -31,17 +31,17 @@ func NewOkMessage(debugMessage string) OkMessage {
 
 type MockMessageHandler struct{}
 
-func (messageHandler *MockMessageHandler) HandleMessage(rawMessage []byte) []byte {
+func (messageHandler *MockMessageHandler) HandleMessage(rawMessage []byte) ([]byte, error) {
 	var message Message
 	json.Unmarshal(rawMessage, &message)
 	fmt.Println(message.MessageType)
 	if message.MessageType != "" {
 		ok := NewOkMessage("")
 		bytes, _ := json.Marshal(ok)
-		return bytes
+		return bytes, nil
 
 	} else {
-		return make([]byte, 0)
+		return make([]byte, 0), nil
 
 	}
 }
@@ -118,7 +118,7 @@ func TestClient(t *testing.T) {
 type MockMessageHandler2 struct {
 }
 
-func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) []byte {
+func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) ([]byte, error) {
 	var findN FindNode
 
 	json.Unmarshal(rawMessage, &findN)
@@ -126,10 +126,10 @@ func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) 
 		var arrayC [1]Contact
 		arrayC[0] = NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)
 		bytes, _ := json.Marshal(arrayC)
-		return bytes
+		return bytes, nil
 
 	} else {
-		return make([]byte, 0)
+		return make([]byte, 0), nil
 
 	}
 }
@@ -160,7 +160,7 @@ func TestSendNodeContactMessage(t *testing.T) {
 
 type MockSlowMessageHandler struct{}
 
-func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) []byte {
+func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) ([]byte, error) {
 	var message Message
 	json.Unmarshal(rawMessage, &message)
 	fmt.Println(message.MessageType)
@@ -168,10 +168,10 @@ func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) [
 	if message.MessageType != "" {
 		ok := NewOkMessage("")
 		bytes, _ := json.Marshal(ok)
-		return bytes
+		return bytes, nil
 
 	} else {
-		return make([]byte, 0)
+		return make([]byte, 0), nil
 
 	}
 }
@@ -189,13 +189,13 @@ func TestTimeout(t *testing.T) {
 	bytes, _ := json.Marshal(ping)
 	_, err := network.Send(network.Ip, network.Port, bytes, time.Second*3)
 	fmt.Println(err)
-	assert.EqualError(t, err, "Time Out Error")
+	assert.EqualError(t, err, "time out error")
 
 }
 
 type MockMessageHandlerConcurrentSend struct{}
 
-func (messageHandler *MockMessageHandlerConcurrentSend) HandleMessage(rawMessage []byte) []byte {
+func (messageHandler *MockMessageHandlerConcurrentSend) HandleMessage(rawMessage []byte) ([]byte, error) {
 	var message Message
 	json.Unmarshal(rawMessage, &message)
 	if message.MessageType == OK_MESSAGE {
@@ -203,10 +203,10 @@ func (messageHandler *MockMessageHandlerConcurrentSend) HandleMessage(rawMessage
 		json.Unmarshal(rawMessage, &okMessage)
 		fmt.Println(okMessage)
 		bytes, _ := json.Marshal(okMessage)
-		return bytes
+		return bytes, nil
 
 	} else {
-		return make([]byte, 0)
+		return make([]byte, 0), nil
 
 	}
 }
