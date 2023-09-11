@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
-	"os"
 	"strconv"
 )
 
@@ -27,6 +25,12 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 	}
 	fmt.Printf("MessageType: %s \n", message.MessageType)
 
+	if err := message.MessageType.IsValid(); err != nil {
+		return nil, err
+	} else {
+		messageHandler.kademliaNode.updateRoutingTable(message.Contact)
+	}
+
 	switch message.MessageType {
 
 	case PING:
@@ -34,21 +38,12 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &ping)
 
-		fmt.Println(ping.FromAddress + " sent you a ping")
+		fmt.Println(ping.Contact.Ip + " sent you a ping")
 
-		hostname, _ := os.Hostname()
-
-		ips, err := net.LookupIP(hostname)
+		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.me)
+		bytes, err := json.Marshal(pong)
 		if err != nil {
-			log.Printf("Lookup ip on `hostname` failed: %v\n", err)
-			return nil, err
-		}
-
-		myIp := ips[0]
-		ack := NewAckPingMessage(myIp.String())
-		bytes, err := json.Marshal(ack)
-		if err != nil {
-			log.Printf("Error when marshaling `ack` message: %v\n", err)
+			log.Printf("Error when marshaling `pong` message: %v\n", err)
 			return nil, err
 		}
 
@@ -106,7 +101,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		fmt.Println(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
 
-		newStoreResponse := NewStoreResponseMessage()
+		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.me)
 		bytes, err := json.Marshal(newStoreResponse)
 		if err != nil {
 			log.Printf("Error when marshaling `newStoreResponse`: %v\n", err)
@@ -116,7 +111,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		return bytes, nil
 
 	default:
-		errorMessage := NewErrorMessage()
+		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.me)
 		bytes, err := json.Marshal(errorMessage)
 		if err != nil {
 			log.Printf("Error when marshaling `errorMessage`: %v\n", err)

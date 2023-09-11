@@ -80,7 +80,7 @@ func mockSend(t *testing.T, ip string, port int, message []byte, timeOut time.Du
 }
 
 func TestServer(t *testing.T) {
-	network := Network{
+	network := NetworkImplementation{
 		"localhost",
 		3000,
 		&MockMessageHandler{},
@@ -89,13 +89,13 @@ func TestServer(t *testing.T) {
 	go network.Listen()
 	time.Sleep(time.Second)
 
-	ping := NewPingMessage(network.Ip)
+	ping := NewPingMessage(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), network.Ip, network.Port))
 	bytes, _ := json.Marshal(ping)
 	mockSend(t, network.Ip, network.Port, bytes, time.Second*3)
 }
 
 func TestClient(t *testing.T) {
-	network := Network{
+	network := NetworkImplementation{
 		"localhost",
 		4000,
 		&MockMessageHandler{},
@@ -104,7 +104,7 @@ func TestClient(t *testing.T) {
 	go network.Listen()
 	time.Sleep(time.Second)
 
-	ping := NewPingMessage(network.Ip)
+	ping := NewPingMessage(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), network.Ip, network.Port))
 	bytes, _ := json.Marshal(ping)
 	response, err := network.Send(network.Ip, network.Port, bytes, time.Second*3)
 
@@ -147,7 +147,7 @@ func TestSendNodeContactMessage(t *testing.T) {
 	}
 
 	// Create a mock Network instance
-	mockNetwork := &Network{
+	mockNetwork := &NetworkImplementation{
 		Ip:             "127.0.0.1",
 		Port:           5000,
 		MessageHandler: &MockMessageHandler2{},
@@ -156,7 +156,8 @@ func TestSendNodeContactMessage(t *testing.T) {
 	go mockNetwork.Listen()
 	time.Sleep(time.Second)
 
-	response, _ := mockNetwork.SendFindContactMessage(&mockContact)
+	from := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), mockNetwork.Ip, mockNetwork.Port)
+	response, _ := mockNetwork.SendFindContactMessage(&from, &mockContact)
 	println("First contact: " + response[0].ID.String())
 	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
 }
@@ -179,7 +180,7 @@ func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) (
 	}
 }
 func TestTimeout(t *testing.T) {
-	network := Network{
+	network := NetworkImplementation{
 		"localhost",
 		6000,
 		&MockSlowMessageHandler{},
@@ -188,7 +189,7 @@ func TestTimeout(t *testing.T) {
 	go network.Listen()
 	time.Sleep(time.Second)
 
-	ping := NewPingMessage(network.Ip)
+	ping := NewPingMessage(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), network.Ip, network.Port))
 	bytes, _ := json.Marshal(ping)
 	_, err := network.Send(network.Ip, network.Port, bytes, time.Second*3)
 	fmt.Println(err)
@@ -214,7 +215,7 @@ func (messageHandler *MockMessageHandlerConcurrentSend) HandleMessage(rawMessage
 	}
 }
 
-func (network *Network) sendOkMessage(t *testing.T, startNumber int) {
+func (network *NetworkImplementation) sendOkMessage(t *testing.T, startNumber int) {
 	debugMessage := "Start number: " + strconv.Itoa(startNumber)
 	outMessage := NewOkMessage("Start number: " + strconv.Itoa(startNumber))
 	bytes, _ := json.Marshal(outMessage)
@@ -233,7 +234,7 @@ func (network *Network) sendOkMessage(t *testing.T, startNumber int) {
 }
 
 func TestConcurrentSends(t *testing.T) {
-	network := Network{
+	network := NetworkImplementation{
 		"localhost",
 		7000,
 		&MockMessageHandlerConcurrentSend{},

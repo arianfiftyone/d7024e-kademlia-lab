@@ -56,3 +56,12 @@ func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 func (bucket *bucket) Len() int {
 	return bucket.list.Len()
 }
+
+func (bucket *bucket) RemoveLastIfFull() bool {
+	if bucket.list.Len() < bucketSize {
+		return false
+	} else {
+		bucket.list.Remove(bucket.list.Back())
+		return true
+	}
+}

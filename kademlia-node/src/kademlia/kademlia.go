@@ -3,7 +3,7 @@ package kademlia
 import "fmt"
 
 type Kademlia struct {
-	Network          *Network
+	Network          Network
 	KademliaNode     *KademliaNode
 	isBootsrap       bool
 	bootsrtapContact *Contact
@@ -16,13 +16,15 @@ const (
 func NewKademlia(ip string, port int, isBootsrap bool, bootstrapIp string, bootstratPort int) *Kademlia {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootsrap)
-	network := &Network{
+	network := &NetworkImplementation{
 		ip,
 		port,
 		&MessageHandlerImplementation{
 			kademliaNode,
 		},
 	}
+	kademliaNode.setNetwork(network)
+
 	var contact Contact
 	if !isBootsrap {
 		contact = NewContact(
@@ -65,7 +67,7 @@ func (kademlia *Kademlia) Join() {
 
 	}
 
-	err := kademlia.Network.SendPingMessage(kademlia.bootsrtapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootsrtapContact)
 	if err != nil {
 		return
 	}
