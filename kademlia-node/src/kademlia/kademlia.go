@@ -5,17 +5,17 @@ import "fmt"
 type Kademlia struct {
 	Network          Network
 	KademliaNode     *KademliaNode
-	isBootsrap       bool
-	bootsrtapContact *Contact
+	isBootstrap      bool
+	bootstrapContact *Contact
 }
 
 const (
 	BootstrapKademliaID = "FFFFFFFF00000000000000000000000000000000"
 )
 
-func NewKademlia(ip string, port int, isBootsrap bool, bootstrapIp string, bootstratPort int) *Kademlia {
+func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
 
-	kademliaNode := NewKademliaNode(ip, port, isBootsrap)
+	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
 	network := &NetworkImplementation{
 		ip,
 		port,
@@ -26,24 +26,24 @@ func NewKademlia(ip string, port int, isBootsrap bool, bootstrapIp string, boots
 	kademliaNode.setNetwork(network)
 
 	var contact Contact
-	if !isBootsrap {
+	if !isBootstrap {
 		contact = NewContact(
 			NewKademliaID(BootstrapKademliaID),
 			bootstrapIp,
-			bootstratPort,
+			bootstrapPort,
 		)
 	}
 	return &Kademlia{
 		Network:          network,
 		KademliaNode:     kademliaNode,
-		isBootsrap:       isBootsrap,
-		bootsrtapContact: &contact,
+		isBootstrap:      isBootstrap,
+		bootstrapContact: &contact,
 	}
 
 }
 
 func (kademlia *Kademlia) Start() {
-	if !kademlia.isBootsrap {
+	if !kademlia.isBootstrap {
 		go func() {
 
 			kademlia.Join()
@@ -61,18 +61,18 @@ func (kademlia *Kademlia) Start() {
 
 func (kademlia *Kademlia) Join() {
 
-	if kademlia.isBootsrap {
+	if kademlia.isBootstrap {
 		fmt.Println("You are the bootstrap node!")
 		return
 
 	}
 
-	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootsrtapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootstrapContact)
 	if err != nil {
 		return
 	}
 
-	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootsrtapContact)
+	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
 	kademlia.LookupContact(&kademlia.KademliaNode.RoutingTable.me)
 
