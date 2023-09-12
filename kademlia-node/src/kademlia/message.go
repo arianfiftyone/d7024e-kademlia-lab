@@ -1,5 +1,7 @@
 package kademlia
 
+import "errors"
+
 type MessageType string
 
 const (
@@ -12,17 +14,27 @@ const (
 	STORE_RESPONSE MessageType = "STORE_RESPONSE"
 )
 
+func (messageType MessageType) IsValid() error {
+	switch messageType {
+	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE: // Add new messageTypes to the case, so it is seen as a valid type
+		return nil
+	}
+	return errors.New("Invalid message type")
+}
+
 type Message struct {
 	MessageType MessageType `json:"messageType"`
+	Contact     Contact     `json:"contact"`
 }
 
 type Error struct {
 	Message
 }
 
-func NewErrorMessage() Error {
+func NewErrorMessage(contact Contact) Error {
 	message := Message{
 		MessageType: ERROR,
+		Contact:     contact,
 	}
 	return Error{
 		message,
@@ -31,31 +43,29 @@ func NewErrorMessage() Error {
 
 type Ping struct {
 	Message
-	FromAddress string `json:"fromAddress"`
 }
 
-func NewPingMessage(fromAddress string) Ping {
+func NewPingMessage(contact Contact) Ping {
 	message := Message{
 		MessageType: PING,
+		Contact:     contact,
 	}
 	return Ping{
 		message,
-		fromAddress,
 	}
 }
 
 type Pong struct {
 	Message
-	FromAddress string `json:"fromAddress"`
 }
 
-func NewAckPingMessage(fromAddress string) Pong {
+func NewPongMessage(contact Contact) Pong {
 	message := Message{
 		MessageType: PONG,
+		Contact:     contact,
 	}
 	return Pong{
 		message,
-		fromAddress,
 	}
 }
 
@@ -65,9 +75,10 @@ type FindNode struct {
 	ID          *KademliaID
 }
 
-func NewFindNodeMessage(fromAddress string, id *KademliaID) FindNode {
+func NewFindNodeMessage(contact Contact, fromAddress string, id *KademliaID) FindNode {
 	message := Message{
 		MessageType: FIND_NODE,
+		Contact:     contact,
 	}
 	return FindNode{
 		message,
@@ -83,9 +94,10 @@ type FindData struct {
 	Key         *Key
 }
 
-func NewFindDataMessage(fromAddress string, id *KademliaID, key *Key) FindData {
+func NewFindDataMessage(contact Contact, fromAddress string, id *KademliaID, key *Key) FindData {
 	message := Message{
 		MessageType: FIND_DATA,
+		Contact:     contact,
 	}
 	return FindData{
 		message,
@@ -103,9 +115,10 @@ type Store struct {
 	Value       string
 }
 
-func NewStoreMessage(fromAddress string, key *Key, id *KademliaID, value string) Store {
+func NewStoreMessage(contact Contact, fromAddress string, key *Key, id *KademliaID, value string) Store {
 	message := Message{
 		MessageType: STORE,
+		Contact:     contact,
 	}
 
 	return Store{
@@ -122,9 +135,10 @@ type StoreResponse struct {
 	StoreSuccess bool `json:"storeSuccess"`
 }
 
-func NewStoreResponseMessage() StoreResponse {
+func NewStoreResponseMessage(contact Contact) StoreResponse {
 	message := Message{
 		MessageType: STORE_RESPONSE,
+		Contact:     contact,
 	}
 
 	// change this value in message_handler

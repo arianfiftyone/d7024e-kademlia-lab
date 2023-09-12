@@ -1,27 +1,20 @@
 package kademlia
 
-import (
-	"os"
-	"strings"
-)
-
 const (
 	NumberOfClosestNodesToRetrieved = 3
 )
 
 type KademliaNode struct {
+	Network      Network
 	RoutingTable *RoutingTable
 	DataStore    *DataStore
 }
 
-func NewKademliaNode(ip string, port int) *KademliaNode {
+func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNode {
 	var routingTable *RoutingTable
 	var kademliaID KademliaID
 
-	IS_BOOTSTRAP_STR := os.Getenv("IS_BOOTSTRAP")
-	IS_BOOTSTRAP := strings.ToLower(IS_BOOTSTRAP_STR) == "true"
-
-	if IS_BOOTSTRAP {
+	if isBootstrap {
 		kademliaID = *NewKademliaID(BootstrapKademliaID)
 	} else {
 		kademliaID = *NewRandomKademliaID()
@@ -39,5 +32,34 @@ func NewKademliaNode(ip string, port int) *KademliaNode {
 	return &KademliaNode{
 		RoutingTable: routingTable,
 		DataStore:    &dataStore,
+	}
+}
+
+func (kademliaNode *KademliaNode) setNetwork(network Network) {
+	kademliaNode.Network = network
+}
+
+func (kademliaNode *KademliaNode) updateRoutingTable(contact Contact) {
+	if kademliaNode.Network == nil {
+		return
+	}
+
+	bucket := kademliaNode.RoutingTable.buckets[kademliaNode.RoutingTable.getBucketIndex(contact.ID)]
+	if bucket.Len() < bucketSize {
+		kademliaNode.RoutingTable.AddContact(contact)
+
+	} else {
+		lastContact := bucket.list.Back().Value.(Contact)
+
+		// Ping the last node in the bucket, replace if it does not respond otherwize do nothing
+		err := kademliaNode.Network.SendPingMessage(&kademliaNode.RoutingTable.me, &lastContact)
+		if err != nil {
+			return
+
+		}
+		bucket.RemoveLastIfFull()
+
+		bucket.AddContact(contact)
+
 	}
 }

@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,13 +9,22 @@ import (
 	"time"
 )
 
-type Network struct {
+type Network interface {
+	Listen() error
+	Send(ip string, port int, message []byte, timeOut time.Duration) ([]byte, error)
+	SendPingMessage(from *Contact, contact *Contact) error
+	SendFindContactMessage(from *Contact, contact *Contact) ([]Contact, error)
+	SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error)
+	SendStoreMessage(from *Contact, contact *Contact, value string) bool
+}
+
+type NetworkImplementation struct {
 	Ip             string
 	Port           int
 	MessageHandler MessageHandler
 }
 
-func (network *Network) Listen() error {
+func (network *NetworkImplementation) Listen() error {
 	// listen to incoming udp packets
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
 		IP:   net.ParseIP(network.Ip),
@@ -45,7 +53,7 @@ func (network *Network) Listen() error {
 				log.Printf("Failed to handle response message: %v\n", err)
 				return
 			}
-			myConn.WriteToUDP([]byte(string(response)+"\n"), remote)
+			myConn.WriteToUDP(response, remote)
 
 		}(conn)
 
@@ -53,7 +61,7 @@ func (network *Network) Listen() error {
 
 }
 
-func (network *Network) Send(ip string, port int, message []byte, timeOut time.Duration) ([]byte, error) {
+func (network *NetworkImplementation) Send(ip string, port int, message []byte, timeOut time.Duration) ([]byte, error) {
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
 		IP:   net.ParseIP(ip),
 		Port: port,
@@ -73,15 +81,23 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 
 	responseChannel := make(chan []byte)
 	go func() {
-		// Read from the connection untill a new line is send
-		data, _ := bufio.NewReader(conn).ReadString('\n')
-		responseChannel <- []byte(data)
+		// Read from the connection
+		data := make([]byte, 1024)
+		len, _, err := conn.ReadFromUDP(data[:])
+		if err != nil {
+			return
+		}
+		responseChannel <- data[:len]
 
 	}()
 
 	select {
 	case response := <-responseChannel:
-		return response, nil
+		if _, err := network.MessageHandler.HandleMessage(response); err != nil {
+			return nil, err
+		} else {
+			return response, nil
+		}
 	case <-time.After(timeOut):
 		return nil, errors.New("time out error")
 
@@ -89,8 +105,8 @@ func (network *Network) Send(ip string, port int, message []byte, timeOut time.D
 
 }
 
-func (network *Network) SendPingMessage(contact *Contact) error {
-	ping := NewPingMessage(network.Ip)
+func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Contact) error {
+	ping := NewPingMessage(*from)
 	bytes, err := json.Marshal(ping)
 	if err != nil {
 		log.Printf("Failed to send ping message to the server: %v\n", err)
@@ -117,13 +133,13 @@ func (network *Network) SendPingMessage(contact *Contact) error {
 		return errUnmarshalAckPing
 	}
 
-	fmt.Println(pong.FromAddress + " acknowledged your ping")
+	fmt.Println(pong.Contact.Ip + " acknowledged your ping")
 	return nil
 
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) ([]Contact, error) {
-	findN := NewFindNodeMessage(network.Ip, contact.ID)
+func (network *NetworkImplementation) SendFindContactMessage(from *Contact, contact *Contact) ([]Contact, error) {
+	findN := NewFindNodeMessage(*from, network.Ip, contact.ID)
 	bytes, err := json.Marshal(findN)
 	if err != nil {
 		log.Printf("Error when marshaling `findN`: %v\n", err)
@@ -142,8 +158,8 @@ func (network *Network) SendFindContactMessage(contact *Contact) ([]Contact, err
 	return arrayOfContacts, nil
 }
 
-func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Contact, string, error) {
-	findData := NewFindDataMessage(network.Ip, contact.ID, key)
+func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error) {
+	findData := NewFindDataMessage(*from, network.Ip, contact.ID, key)
 	bytes, err := json.Marshal(findData)
 	if err != nil {
 		return nil, "", err
@@ -167,9 +183,9 @@ func (network *Network) SendFindDataMessage(contact *Contact, key *Key) ([]Conta
 
 }
 
-func (network *Network) SendStoreMessage(contact *Contact, value string) bool {
+func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *Contact, value string) bool {
 	key := HashToKey(value)
-	store := NewStoreMessage(network.Ip, key, contact.ID, value)
+	store := NewStoreMessage(*from, network.Ip, key, contact.ID, value)
 	bytes, err := json.Marshal(store)
 	if err != nil {
 		log.Printf("Error when marshaling `store` message: %v\n", err)
