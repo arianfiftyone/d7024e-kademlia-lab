@@ -1,9 +1,11 @@
 package kademlia
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"golang.org/x/exp/slices"
 )
@@ -14,6 +16,8 @@ type Kademlia struct {
 	isBootstrap      bool
 	bootstrapContact *Contact
 }
+
+var mutex sync.Mutex
 
 const (
 	BootstrapKademliaID   = "FFFFFFFF00000000000000000000000000000000"
@@ -85,9 +89,12 @@ func (kademlia *Kademlia) Join() {
 
 }
 
-func (kademlia *Kademlia) QueryAlphaContacts(contactsToQuery []Contact, target Contact, foundContactsChannel chan []Contact) {
+func (kademlia *Kademlia) QueryAlphaContacts(contactsToQuery []Contact, queriedContacts *[]Contact, target Contact, foundContactsChannel chan []Contact) {
 	for i := 0; i < len(contactsToQuery); i++ {
 		go func(contactToQuery Contact) {
+			mutex.Lock()
+			*queriedContacts = append(*queriedContacts, contactToQuery)
+			mutex.Unlock()
 			foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.me, &contactToQuery, target.ID)
 
 			if err != nil {
@@ -146,70 +153,102 @@ func containsAll(first []Contact, second []Contact) bool {
 	return result
 }
 
-func (kademlia *Kademlia) LookupContact(target *Contact) ([]Contact, error) {
-	queriedContactsMap := map[KademliaID]*Contact{}
-	var closestToTargetList []Contact
-	var previousClosestToTargetList []Contact
-
-	contactsToQuery := kademlia.KademliaNode.RoutingTable.FindClosestContacts(target.ID, NumberOfAlphaContacts)
-
-	for _, contactToQuery := range contactsToQuery {
-		queriedContactsMap[*contactToQuery.ID] = &contactToQuery
-	}
-	foundContactsChannel := make(chan []Contact)
-
-	kademlia.QueryAlphaContacts(contactsToQuery, *target, foundContactsChannel)
-
-	var mutex sync.Mutex
-	for foundContacts := range foundContactsChannel {
-		mutex.Lock()
-		if len(previousClosestToTargetList) != 0 && containsAll(closestToTargetList, previousClosestToTargetList) {
+func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closestToTargetList *[]Contact) []Contact {
+	mutex.Lock()
+	contactsToQuery := []Contact{}
+	currentAmountToQuery := 0
+	for _, contact := range *closestToTargetList {
+		if currentAmountToQuery >= NumberOfAlphaContacts {
 			break
 		}
+
+		isQueried := false
+		for _, queriedContact := range *queriedContacts {
+			if contact.ID == queriedContact.ID {
+				isQueried = true
+			}
+		}
+		if !isQueried {
+			contactsToQuery = append(contactsToQuery, contact)
+			currentAmountToQuery++
+		}
+	}
+	mutex.Unlock()
+	return contactsToQuery
+}
+func (kademlia *Kademlia) lookupRound(target *Contact, lookupCompleteChannel chan bool, stop *bool, previousClosestToTargetList []Contact, queriedContacts *[]Contact, closestToTargetList *[]Contact) {
+	contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList)
+	mutex.Lock()
+	if *stop {
 		mutex.Unlock()
-		go func(foundContacts []Contact) {
+		return
+	}
+	mutex.Unlock()
+
+	foundContactsChannel := make(chan []Contact)
+
+	kademlia.QueryAlphaContacts(contactsToQuery, queriedContacts, *target, foundContactsChannel)
+	timesTimedOut := 0
+
+	for i := 0; i < len(contactsToQuery); i++ {
+		select {
+		case foundContacts := <-foundContactsChannel:
 			mutex.Lock()
 
-			previousClosestToTargetList = closestToTargetList
-
-			closestToTargetList = kademlia.getKClosest(closestToTargetList, foundContacts, target.ID, NumberOfClosestNodesToRetrieved)
-
-			contactsToQuery := []Contact{}
-			currentAmountToQuery := 0
-			for _, contact := range closestToTargetList {
-				if currentAmountToQuery >= NumberOfAlphaContacts {
-					break
-				}
-				if queriedContactsMap[*contact.ID] == nil {
-					contactsToQuery = append(contactsToQuery, contact)
-					currentAmountToQuery++
-				}
-			}
-
-			for _, contactToQuery := range contactsToQuery {
-				queriedContactsMap[*contactToQuery.ID] = &contactToQuery
-			}
-			kademlia.QueryAlphaContacts(contactsToQuery, *target, foundContactsChannel)
+			kClosest := kademlia.getKClosest(*closestToTargetList, foundContacts, target.ID, NumberOfClosestNodesToRetrieved)
+			*closestToTargetList = kClosest
 
 			mutex.Unlock()
-		}(foundContacts)
+			go kademlia.lookupRound(target, lookupCompleteChannel, stop, *closestToTargetList, queriedContacts, closestToTargetList)
+
+		case <-time.After(time.Second * 4):
+			timesTimedOut++
+		}
 
 	}
+	mutex.Lock()
+	if (len(previousClosestToTargetList) != 0 && containsAll(*closestToTargetList, previousClosestToTargetList)) || timesTimedOut >= len(contactsToQuery) {
+		*stop = true
+		mutex.Unlock()
+		lookupCompleteChannel <- true
+	} else {
+		mutex.Unlock()
+	}
+}
+
+func (kademlia *Kademlia) LookupContact(target *Contact) ([]Contact, error) {
+	queriedContacts := new([]Contact)
+
+	var closestToTargetList *[]Contact
+	alphaClosest := kademlia.KademliaNode.RoutingTable.FindClosestContacts(target.ID, NumberOfAlphaContacts)
+	closestToTargetList = &alphaClosest
+
+	lookupCompleteChannel := make(chan bool)
+	stop := false
+	go kademlia.lookupRound(target, lookupCompleteChannel, &stop, []Contact{}, queriedContacts, closestToTargetList)
+	lookupComplete := <-lookupCompleteChannel
+
+	if !lookupComplete {
+		return nil, errors.New("Something went wrong!")
+	}
+	mutex.Lock()
+	kClosest := *closestToTargetList
+	mutex.Unlock()
+	contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList)
+
 	for i := 0; i < len(contactsToQuery); i++ {
 		foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.me, &contactsToQuery[i], target.ID)
-		fmt.Println("")
-		fmt.Println(foundContacts)
 
 		if err != nil {
 			log.Printf("Failed find node: %v\n", err)
 		} else {
-			closestToTargetList = kademlia.getKClosest(closestToTargetList, foundContacts, target.ID, NumberOfClosestNodesToRetrieved)
+			kClosest = kademlia.getKClosest(kClosest, foundContacts, target.ID, NumberOfClosestNodesToRetrieved)
 
 		}
 
 	}
 
-	return closestToTargetList, nil
+	return kClosest, nil
 }
 
 func (kademlia *Kademlia) LookupData(hash string) {

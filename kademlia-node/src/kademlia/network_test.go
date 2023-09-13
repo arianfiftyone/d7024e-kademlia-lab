@@ -128,7 +128,7 @@ func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) 
 	if findN.MessageType == FIND_NODE {
 		var arrayC [1]Contact
 		arrayC[0] = NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)
-		bytes, _ := json.Marshal(arrayC)
+		bytes, _ := json.Marshal(NewFoundContactsMessage(findN.From, arrayC[:]))
 		return bytes, nil
 
 	} else {
@@ -158,7 +158,7 @@ func TestSendNodeContactMessage(t *testing.T) {
 
 	from := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), mockNetwork.Ip, mockNetwork.Port)
 	response, _ := mockNetwork.SendFindContactMessage(&from, &mockContact, mockContact.ID)
-	println("First contact: " + response[0].ID.String())
+	fmt.Println("First contact: " + response[0].ID.String())
 	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
 }
 
@@ -182,7 +182,7 @@ func (messageHandler *MockSlowMessageHandler) HandleMessage(rawMessage []byte) (
 func TestTimeout(t *testing.T) {
 	network := NetworkImplementation{
 		"localhost",
-		6000,
+		8000,
 		&MockSlowMessageHandler{},
 	}
 
