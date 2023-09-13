@@ -157,7 +157,7 @@ func TestSendNodeContactMessage(t *testing.T) {
 	time.Sleep(time.Second)
 
 	from := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), mockNetwork.Ip, mockNetwork.Port)
-	response, _ := mockNetwork.SendFindContactMessage(&from, &mockContact)
+	response, _ := mockNetwork.SendFindContactMessage(&from, &mockContact, mockContact.ID)
 	println("First contact: " + response[0].ID.String())
 	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
 }
