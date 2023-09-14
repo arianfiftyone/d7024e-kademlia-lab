@@ -8,13 +8,13 @@ import (
 )
 
 func TestJoinWithBootstrapOnly(t *testing.T) {
-	kademliaBootsrap := NewKademlia("127.0.0.1", 3001, true, "", 0)
+	kademliaBootsrap := NewKademlia("127.0.0.1", 2000, true, "", 0)
 
 	go kademliaBootsrap.Start()
 
 	time.Sleep(time.Second)
 
-	kademlia := NewKademlia("127.0.0.1", 3002, false, "127.0.0.1", 3001)
+	kademlia := NewKademlia("127.0.0.1", 2001, false, "127.0.0.1", 2000)
 
 	kademlia.Join()
 
@@ -27,7 +27,7 @@ func TestJoinWithBootstrapOnly(t *testing.T) {
 }
 
 func TestJoinWithMultipleNodes(t *testing.T) {
-	kademliaBootsrap := NewKademlia("127.0.0.1", 3001, true, "", 0)
+	kademliaBootsrap := NewKademlia("127.0.0.1", 2001, true, "", 0)
 
 	var mockContacts = []Contact{
 		NewContact(NewRandomKademliaID(), "198.162.1.1", 3000),
