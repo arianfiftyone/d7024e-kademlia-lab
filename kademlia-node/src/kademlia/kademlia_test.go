@@ -80,7 +80,7 @@ func TestLookupContact(t *testing.T) {
 
 	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
 
-	list, _ := kademlia.LookupContact(&contact1)
+	list, _ := kademlia.LookupContact(contact1.ID)
 	fmt.Println(list)
 
 	//assert.Equal(t, contact, bucket.list.Front().Value.(Contact))
@@ -126,11 +126,30 @@ func TestLookupContact2(t *testing.T) {
 
 	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
 	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
-	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
-	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+
+	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
+	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
 	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
-	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
+
+	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
+	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
 	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
 
 	go bootstrap.Start()
 	go kademlia1.Start()
@@ -145,7 +164,7 @@ func TestLookupContact2(t *testing.T) {
 
 	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
 
-	list, _ := kademlia.LookupContact(&kademlia1.KademliaNode.RoutingTable.me)
+	list, _ := kademlia.LookupContact(kademlia1.KademliaNode.RoutingTable.me.ID)
 
 	fmt.Println("closest To Target List")
 	fmt.Println(list)
