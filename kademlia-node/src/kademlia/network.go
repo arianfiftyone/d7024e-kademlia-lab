@@ -145,7 +145,7 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 		return errUnmarshalAckPing
 	}
 
-	logger.Log(pong.Contact.Ip + " acknowledged your ping")
+	logger.Log(pong.From.Ip + " acknowledged your ping")
 	return nil
 
 }
