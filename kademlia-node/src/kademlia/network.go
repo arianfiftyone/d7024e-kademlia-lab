@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"time"
+
+	"github.com/arianfiftyone/src/logger"
 )
 
 type Network interface {
@@ -133,7 +135,7 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 		return errUnmarshalAckPing
 	}
 
-	fmt.Println(pong.Contact.Ip + " acknowledged your ping")
+	logger.Log(pong.Contact.Ip + " acknowledged your ping")
 	return nil
 
 }

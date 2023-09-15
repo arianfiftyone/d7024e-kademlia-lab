@@ -67,14 +67,14 @@ func (kademlia *Kademlia) Join() {
 
 	}
 
-	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootstrapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.Me, kademlia.bootstrapContact)
 	if err != nil {
 		return
 	}
 
 	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
-	kademlia.LookupContact(&kademlia.KademliaNode.RoutingTable.me)
+	kademlia.LookupContact(&kademlia.KademliaNode.RoutingTable.Me)
 
 }
 
@@ -82,10 +82,12 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 	// TODO
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
+func (kademlia *Kademlia) LookupData(key *Key) (string, error) {
+
+	return "", nil
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
-	// A node finds k nodes to check if they are close to the hash
+func (kademlia *Kademlia) Store(content string) (*Key, error) {
+
+	return &Key{}, nil
 }

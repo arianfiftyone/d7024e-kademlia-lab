@@ -2,21 +2,26 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/arianfiftyone/src/cli"
 	"github.com/arianfiftyone/src/kademlia"
+	"github.com/arianfiftyone/src/logger"
 )
 
 func health(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "alive\n")
 }
 
-func main() {
+var output io.Writer = os.Stdout
 
+func main() {
 	BOOSTRAP_NODE_HOSTNAME := os.Getenv("BOOSTRAP_NODE_HOSTNAME")
 
 	IS_BOOTSTRAP_STR := os.Getenv("IS_BOOTSTRAP")
@@ -56,15 +61,20 @@ func main() {
 
 	}
 	ip := ips[0].String()
-	kademliaInstance := kademlia.NewKademlia(ip, port, isBootsrap, bootstrapIp, bootstrapPort)
 
+	KademliaInstance := kademlia.NewKademlia(ip, port, isBootsrap, bootstrapIp, bootstrapPort)
 	if isBootsrap {
 		http.HandleFunc("/", health)
 		go http.ListenAndServe(":80", nil)
 
 	}
 
-	fmt.Printf("Starting node...\n")
-	kademliaInstance.Start()
+	logger.Log("Starting node...")
+
+	go KademliaInstance.Start()
+	time.Sleep(500 * time.Millisecond)
+
+	cli := cli.NewCli(KademliaInstance)
+	cli.StartCli(output)
 
 }
