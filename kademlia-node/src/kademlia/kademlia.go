@@ -82,9 +82,9 @@ func (kademlia *Kademlia) Join() {
 		return
 	}
 
-	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact
-                                                
-	kademlia.LookupContact(&kademlia.KademliaNode.RoutingTable.Me)
+	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
+
+	kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
 
 }
 
@@ -94,7 +94,7 @@ func (kademlia *Kademlia) QueryAlphaContacts(contactsToQuery []Contact, queriedC
 			mutex.Lock()
 			*queriedContacts = append(*queriedContacts, contactToQuery)
 			mutex.Unlock()
-			foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.me, &contactToQuery, &targetId)
+			foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, &targetId)
 
 			if err != nil {
 				queryFailedChannel <- err

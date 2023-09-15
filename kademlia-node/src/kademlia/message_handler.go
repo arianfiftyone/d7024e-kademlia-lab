@@ -40,7 +40,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &ping)
 
-		logger.Log(ping.Contact.Ip + " sent you a ping")
+		logger.Log(ping.From.Ip + " sent you a ping")
 
 		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(pong)
@@ -59,7 +59,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		fmt.Println(findN.From.Ip + " wants to find your k closest nodes.")
 		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
 
-		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.me, closestKNodesList))
+		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList))
 		if err != nil {
 			log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 			return nil, err
@@ -77,7 +77,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
-			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, closestKNodesList, ""))
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
 			if err != nil {
 				log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 				return nil, err
@@ -85,7 +85,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			return bytes, nil
 
 		} else {
-			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, nil, data))
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, nil, data))
 			if err != nil {
 				log.Printf("Error when marshaling `data`: %v\n", err)
 				return nil, err
