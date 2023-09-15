@@ -135,7 +135,7 @@ func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact,
 
 }
 
-func containsAll(first []Contact, second []Contact) bool {
+func (kademlia *Kademlia) containsAll(first []Contact, second []Contact) bool {
 	result := true
 
 	var secondIds []KademliaID
@@ -209,7 +209,7 @@ func (kademlia *Kademlia) lookupRound(targetId *KademliaID, lookupCompleteChanne
 
 	}
 	mutex.Lock()
-	if (len(previousClosestToTargetList) != 0 && containsAll(*closestToTargetList, previousClosestToTargetList)) || timesFailed >= len(contactsToQuery) {
+	if (len(previousClosestToTargetList) != 0 && kademlia.containsAll(*closestToTargetList, previousClosestToTargetList)) || timesFailed >= len(contactsToQuery) {
 		*stop = true
 		mutex.Unlock()
 		lookupCompleteChannel <- true

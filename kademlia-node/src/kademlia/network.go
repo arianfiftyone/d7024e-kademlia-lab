@@ -192,14 +192,25 @@ func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact
 		return nil, "", err
 	}
 
-	var data string
+	var message Message
+	errUnmarshal := json.Unmarshal(response, &message)
+	if errUnmarshal != nil || message.MessageType != FOUND_DATA {
+		log.Printf("Failed to find data: %v\n", errUnmarshal)
+		return nil, "", errUnmarshal
+	}
+
+	var data FoundData
+	errUnmarshalFoundData := json.Unmarshal(response, &data)
+	if errUnmarshalFoundData != nil {
+		log.Printf("Failed to find data: %v\n", errUnmarshalFoundData)
+		return nil, "", errUnmarshalFoundData
+	}
+
 	json.Unmarshal(response, &data)
-	if data == "" {
-		var arrayOfContacts []Contact
-		json.Unmarshal(response, &arrayOfContacts)
-		return arrayOfContacts, "", nil
+	if data.Value == "" {
+		return data.Contacts, "", nil
 	} else {
-		return nil, data, nil
+		return nil, data.Value, nil
 	}
 
 }

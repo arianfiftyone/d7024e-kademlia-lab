@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestJoin(t *testing.T) {
@@ -71,23 +73,20 @@ func TestLookupContact(t *testing.T) {
 	time.Sleep(time.Second)
 
 	kademlia := NewKademlia("127.0.0.1", 3001, false, "", 0)
-	// kademlia := &Kademlia{
-	// 	&networkMock{},
-	// 	NewKademliaNode("127.0.0.1", 3001, false),
-	// 	false,
-	// 	&bootstrap.KademliaNode.RoutingTable.me,
-	// }
 
 	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
 
 	list, _ := kademlia.LookupContact(contact1.ID)
+
+	fmt.Println("closest To Target List")
 	fmt.Println(list)
 
-	//assert.Equal(t, contact, bucket.list.Front().Value.(Contact))
+	doesContainAll := bootstrap.containsAll(list, []Contact{contact1, contact2, contact3})
+	assert.True(t, doesContainAll)
 
 }
 
-func createMockedKademlia(kademliaID *KademliaID, ip string, port int) Kademlia {
+func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) Kademlia {
 	routingTable := NewRoutingTable(NewContact(kademliaID, ip, port))
 	dataStore := NewDataStore()
 	kademliaNode := &KademliaNode{
@@ -113,14 +112,14 @@ func createMockedKademlia(kademliaID *KademliaID, ip string, port int) Kademlia 
 }
 func TestLookupContact2(t *testing.T) {
 
-	bootstrap := createMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7000)
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7000)
 
-	kademlia1 := createMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
-	kademlia2 := createMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
-	kademlia3 := createMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 7003)
-	kademlia4 := createMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 7004)
-	kademlia5 := createMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 7005)
-	kademlia6 := createMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 7006)
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
+	kademlia3 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 7003)
+	kademlia4 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 7004)
+	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 7005)
+	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 7006)
 
 	fmt.Println("testy: " + kademlia6.KademliaNode.RoutingTable.me.String())
 
@@ -169,6 +168,7 @@ func TestLookupContact2(t *testing.T) {
 	fmt.Println("closest To Target List")
 	fmt.Println(list)
 
-	//assert.Equal(t, contact, bucket.list.Front().Value.(Contact))
+	doesContainAll := bootstrap.containsAll(list, []Contact{kademlia1.KademliaNode.RoutingTable.me, kademlia2.KademliaNode.RoutingTable.me, kademlia3.KademliaNode.RoutingTable.me})
+	assert.True(t, doesContainAll)
 
 }

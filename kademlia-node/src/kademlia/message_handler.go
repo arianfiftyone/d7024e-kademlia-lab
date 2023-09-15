@@ -75,7 +75,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
-			bytes, err := json.Marshal(closestKNodesList)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, closestKNodesList, ""))
 			if err != nil {
 				log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 				return nil, err
@@ -83,7 +83,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			return bytes, nil
 
 		} else {
-			bytes, err := json.Marshal(data)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, nil, data))
 			if err != nil {
 				log.Printf("Error when marshaling `data`: %v\n", err)
 				return nil, err

@@ -123,9 +123,16 @@ type MockMessageHandler2 struct {
 
 func (mockMessageHandler *MockMessageHandler2) HandleMessage(rawMessage []byte) ([]byte, error) {
 	var findN FindNode
+	//var findData FindData
 
 	json.Unmarshal(rawMessage, &findN)
 	if findN.MessageType == FIND_NODE {
+		var arrayC [1]Contact
+		arrayC[0] = NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)
+		bytes, _ := json.Marshal(NewFoundContactsMessage(findN.From, arrayC[:]))
+		return bytes, nil
+
+	} else if findN.MessageType == FIND_DATA {
 		var arrayC [1]Contact
 		arrayC[0] = NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)
 		bytes, _ := json.Marshal(NewFoundContactsMessage(findN.From, arrayC[:]))
@@ -160,6 +167,42 @@ func TestSendNodeContactMessage(t *testing.T) {
 	response, _ := mockNetwork.SendFindContactMessage(&from, &mockContact, mockContact.ID)
 	fmt.Println("First contact: " + response[0].ID.String())
 	assert.Equal(t, response[0], NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001))
+}
+
+func TestSendNodeDataMessage(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7010)
+
+	value := "data"
+	key := HashToKey(value)
+
+	bootstrap.KademliaNode.DataStore.Insert(key, value)
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+	_, str, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.RoutingTable.me, &bootstrap.KademliaNode.RoutingTable.me, key)
+
+	assert.Equal(t, str, value)
+}
+
+func TestSendNodeDataMessageNoData(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7020)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7011)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7012)
+
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
+
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+	value := "data"
+	key := HashToKey(value)
+	contacts, _, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.RoutingTable.me, &bootstrap.KademliaNode.RoutingTable.me, key)
+
+	kClosest := bootstrap.KademliaNode.RoutingTable.FindClosestContacts(bootstrap.KademliaNode.RoutingTable.me.ID, NumberOfClosestNodesToRetrieved)
+	doesContainAll := bootstrap.containsAll(kClosest, contacts)
+	assert.True(t, doesContainAll)
 }
 
 type MockSlowMessageHandler struct{}

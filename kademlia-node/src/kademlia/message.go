@@ -13,11 +13,12 @@ const (
 	STORE          MessageType = "STORE"
 	STORE_RESPONSE MessageType = "STORE_RESPONSE"
 	FOUND_CONTACTS MessageType = "FOUND_CONTACTS"
+	FOUND_DATA     MessageType = "FOUND_DATA"
 )
 
 func (messageType MessageType) IsValid() error {
 	switch messageType {
-	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS: // Add new messageTypes to the case, so it is seen as a valid type
+	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA: // Add new messageTypes to the case, so it is seen as a valid type
 		return nil
 	}
 	return errors.New("Invalid message type")
@@ -164,6 +165,26 @@ func NewFoundContactsMessage(from Contact, contacts []Contact) FoundContacts {
 	return FoundContacts{
 		message,
 		contacts,
+	}
+
+}
+
+type FoundData struct {
+	Message
+	Contacts []Contact `json:"contacts"`
+	Value    string    `json:"value"`
+}
+
+func NewFoundDataMessage(from Contact, contacts []Contact, value string) FoundData {
+	message := Message{
+		MessageType: FOUND_DATA,
+		From:        from,
+	}
+
+	return FoundData{
+		message,
+		contacts,
+		value,
 	}
 
 }
