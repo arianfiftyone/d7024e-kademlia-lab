@@ -23,8 +23,8 @@ func TestInsert(t *testing.T) {
 
 	dataStore.Insert(key, value)
 
-	if !reflect.DeepEqual(dataStore.data[key], value) {
-		t.Errorf("Insert: Expected %v, got %v", value, dataStore.data[key])
+	if !reflect.DeepEqual(dataStore.data[key.Hash], value) {
+		t.Errorf("Insert: Expected %v, got %v", value, dataStore.data[key.Hash])
 	}
 }
 

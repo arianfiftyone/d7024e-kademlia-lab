@@ -28,7 +28,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 	if err := message.MessageType.IsValid(); err != nil {
 		return nil, err
 	} else {
-		messageHandler.kademliaNode.updateRoutingTable(message.Contact)
+		messageHandler.kademliaNode.updateRoutingTable(message.From)
 	}
 
 	switch message.MessageType {
@@ -38,7 +38,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &ping)
 
-		fmt.Println(ping.Contact.Ip + " sent you a ping")
+		fmt.Println(ping.From.Ip + " sent you a ping")
 
 		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.me)
 		bytes, err := json.Marshal(pong)
@@ -54,10 +54,10 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &findN)
 
-		fmt.Println(findN.FromAddress + " wants to find your k closest nodes.")
+		fmt.Println(findN.From.Ip + " wants to find your k closest nodes.")
 		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
 
-		bytes, err := json.Marshal(closestKNodesList)
+		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.me, closestKNodesList))
 		if err != nil {
 			log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 			return nil, err
@@ -75,7 +75,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
-			bytes, err := json.Marshal(closestKNodesList)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, closestKNodesList, ""))
 			if err != nil {
 				log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 				return nil, err
@@ -83,7 +83,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			return bytes, nil
 
 		} else {
-			bytes, err := json.Marshal(data)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.me, nil, data))
 			if err != nil {
 				log.Printf("Error when marshaling `data`: %v\n", err)
 				return nil, err
