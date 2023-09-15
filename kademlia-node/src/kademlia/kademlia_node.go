@@ -1,7 +1,7 @@
 package kademlia
 
 const (
-	NumberOfClosestNodesToRetrieved = 3
+	NumberOfClosestNodesToRetrieved = 3 // Must be atleast 3, otherwize some tests will fail
 )
 
 type KademliaNode struct {
