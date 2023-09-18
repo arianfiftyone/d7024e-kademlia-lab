@@ -88,4 +88,8 @@ func (kademlia *Kademlia) LookupData(hash string) {
 
 func (kademlia *Kademlia) Store(data []byte) {
 	// A node finds k nodes to check if they are close to the hash
+
+	key := HashToKey(string(data[:]))
+	keyContact := NewContact(key.GetKademliaIdRepresentationOfKey(), "", 0)
+	kademlia.LookupContact(&keyContact)
 }

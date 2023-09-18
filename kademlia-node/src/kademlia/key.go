@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	KeySize = 20
+	KeySize = IDLength
 )
 
 type Key struct {
@@ -19,4 +19,8 @@ func HashToKey(value string) *Key {
 	return &Key{
 		hash,
 	}
+}
+
+func (key *Key) GetKademliaIdRepresentationOfKey() *KademliaID {
+	return NewKademliaID(string(key.Hash[:]))
 }
