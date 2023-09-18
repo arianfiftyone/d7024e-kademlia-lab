@@ -1,3 +1,3 @@
 #!/bin/sh
-cd ./src
+cd src
 go run .
