@@ -23,6 +23,7 @@ const (
 	NumberOfAlphaContacts = 3
 )
 
+// NewKademlia gives new
 func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
@@ -85,6 +86,29 @@ func (kademlia *Kademlia) Join() {
 	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
 	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.me.ID)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
+
+	var lowerBound *KademliaID
+	var highBound *KademliaID
+
+	if kademlia.KademliaNode.RoutingTable.me.ID.Less(kademlia.bootstrapContact.ID) {
+		lowerBound = kademlia.bootstrapContact.ID
+		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	} else {
+		lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
+		highBound = kademlia.bootstrapContact.ID
+	}
+
+	randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
+	if err != nil {
+		return
+	}
+	contacts, err = kademlia.LookupContact(randomKademliaIDInRnge)
 	if err != nil {
 		return
 	}

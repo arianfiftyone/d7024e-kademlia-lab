@@ -2,6 +2,7 @@ package kademlia
 
 import (
 	"encoding/hex"
+	"errors"
 	"math/rand"
 )
 
@@ -31,6 +32,26 @@ func NewRandomKademliaID() *KademliaID {
 		newKademliaID[i] = uint8(rand.Intn(256))
 	}
 	return &newKademliaID
+}
+
+// NewRandomKademliaIDInRange returns a new instance of a random KademliaID, within a given range
+func NewRandomKademliaIDInRange(lowBound *KademliaID, highBound *KademliaID) (*KademliaID, error) {
+	if !lowBound.Less(highBound) {
+		return nil, errors.New("the low bound is not lower than the high bound")
+	}
+
+	newKademliaID := &KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		min := lowBound[i]
+		max := highBound[i]
+		diff := max - min
+		randomInt := rand.Intn(int(diff) + 1)
+		randomInt = randomInt + int(min)
+		newKademliaID[i] = byte(randomInt)
+	}
+
+	return newKademliaID, nil
+
 }
 
 // Less returns true if kademliaID < otherKademliaID (bitwise)
