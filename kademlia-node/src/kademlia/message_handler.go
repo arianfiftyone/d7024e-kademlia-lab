@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+
+	"github.com/arianfiftyone/src/logger"
 )
 
 type MessageHandler interface {
@@ -23,12 +25,12 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		log.Printf("Error when unmarshaling `message` message: %v\n", err)
 		return nil, err
 	}
-	fmt.Printf("MessageType: %s \n", message.MessageType)
+	logger.Log("MessageType: " + string(message.MessageType))
 
 	if err := message.MessageType.IsValid(); err != nil {
 		return nil, err
 	} else {
-		messageHandler.kademliaNode.updateRoutingTable(message.Contact)
+		messageHandler.kademliaNode.updateRoutingTable(message.From)
 	}
 
 	switch message.MessageType {
@@ -38,9 +40,9 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &ping)
 
-		fmt.Println(ping.Contact.Ip + " sent you a ping")
+		logger.Log(ping.From.Ip + " sent you a ping")
 
-		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.me)
+		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(pong)
 		if err != nil {
 			log.Printf("Error when marshaling `pong` message: %v\n", err)
@@ -54,10 +56,10 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &findN)
 
-		fmt.Println(findN.FromAddress + " wants to find your k closest nodes.")
+		fmt.Println(findN.From.Ip + " wants to find your k closest nodes.")
 		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
 
-		bytes, err := json.Marshal(closestKNodesList)
+		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList))
 		if err != nil {
 			log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 			return nil, err
@@ -75,7 +77,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
-			bytes, err := json.Marshal(closestKNodesList)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
 			if err != nil {
 				log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
 				return nil, err
@@ -83,7 +85,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			return bytes, nil
 
 		} else {
-			bytes, err := json.Marshal(data)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, nil, data))
 			if err != nil {
 				log.Printf("Error when marshaling `data`: %v\n", err)
 				return nil, err
@@ -101,7 +103,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		fmt.Println(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
 
-		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.me)
+		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(newStoreResponse)
 		if err != nil {
 			log.Printf("Error when marshaling `newStoreResponse`: %v\n", err)
@@ -111,7 +113,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		return bytes, nil
 
 	default:
-		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.me)
+		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(errorMessage)
 		if err != nil {
 			log.Printf("Error when marshaling `errorMessage`: %v\n", err)

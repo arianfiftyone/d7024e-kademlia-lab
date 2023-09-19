@@ -36,7 +36,7 @@ func (network *NetworkMock) Send(ip string, port int, message []byte, timeOut ti
 func (network *NetworkMock) SendPingMessage(from *Contact, contact *Contact) error {
 	return nil
 }
-func (network *NetworkMock) SendFindContactMessage(from *Contact, contact *Contact) ([]Contact, error) {
+func (network *NetworkMock) SendFindContactMessage(from *Contact, contact *Contact, id *KademliaID) ([]Contact, error) {
 	return nil, nil
 }
 func (network *NetworkMock) SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error) {

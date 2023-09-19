@@ -12,11 +12,13 @@ const (
 	FIND_DATA      MessageType = "FIND_DATA"
 	STORE          MessageType = "STORE"
 	STORE_RESPONSE MessageType = "STORE_RESPONSE"
+	FOUND_CONTACTS MessageType = "FOUND_CONTACTS"
+	FOUND_DATA     MessageType = "FOUND_DATA"
 )
 
 func (messageType MessageType) IsValid() error {
 	switch messageType {
-	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE: // Add new messageTypes to the case, so it is seen as a valid type
+	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA: // Add new messageTypes to the case, so it is seen as a valid type
 		return nil
 	}
 	return errors.New("Invalid message type")
@@ -24,17 +26,17 @@ func (messageType MessageType) IsValid() error {
 
 type Message struct {
 	MessageType MessageType `json:"messageType"`
-	Contact     Contact     `json:"contact"`
+	From        Contact     `json:"contact"`
 }
 
 type Error struct {
 	Message
 }
 
-func NewErrorMessage(contact Contact) Error {
+func NewErrorMessage(from Contact) Error {
 	message := Message{
 		MessageType: ERROR,
-		Contact:     contact,
+		From:        from,
 	}
 	return Error{
 		message,
@@ -45,10 +47,10 @@ type Ping struct {
 	Message
 }
 
-func NewPingMessage(contact Contact) Ping {
+func NewPingMessage(from Contact) Ping {
 	message := Message{
 		MessageType: PING,
-		Contact:     contact,
+		From:        from,
 	}
 	return Ping{
 		message,
@@ -59,10 +61,10 @@ type Pong struct {
 	Message
 }
 
-func NewPongMessage(contact Contact) Pong {
+func NewPongMessage(from Contact) Pong {
 	message := Message{
 		MessageType: PONG,
-		Contact:     contact,
+		From:        from,
 	}
 	return Pong{
 		message,
@@ -71,18 +73,16 @@ func NewPongMessage(contact Contact) Pong {
 
 type FindNode struct {
 	Message
-	FromAddress string `json:"fromAddress"`
-	ID          *KademliaID
+	ID *KademliaID
 }
 
-func NewFindNodeMessage(contact Contact, fromAddress string, id *KademliaID) FindNode {
+func NewFindNodeMessage(from Contact, id *KademliaID) FindNode {
 	message := Message{
 		MessageType: FIND_NODE,
-		Contact:     contact,
+		From:        from,
 	}
 	return FindNode{
 		message,
-		fromAddress,
 		id,
 	}
 }
@@ -94,10 +94,10 @@ type FindData struct {
 	Key         *Key
 }
 
-func NewFindDataMessage(contact Contact, fromAddress string, id *KademliaID, key *Key) FindData {
+func NewFindDataMessage(from Contact, fromAddress string, id *KademliaID, key *Key) FindData {
 	message := Message{
 		MessageType: FIND_DATA,
-		Contact:     contact,
+		From:        from,
 	}
 	return FindData{
 		message,
@@ -115,10 +115,10 @@ type Store struct {
 	Value       string
 }
 
-func NewStoreMessage(contact Contact, fromAddress string, key *Key, id *KademliaID, value string) Store {
+func NewStoreMessage(from Contact, fromAddress string, key *Key, id *KademliaID, value string) Store {
 	message := Message{
 		MessageType: STORE,
-		Contact:     contact,
+		From:        from,
 	}
 
 	return Store{
@@ -135,10 +135,10 @@ type StoreResponse struct {
 	StoreSuccess bool `json:"storeSuccess"`
 }
 
-func NewStoreResponseMessage(contact Contact) StoreResponse {
+func NewStoreResponseMessage(from Contact) StoreResponse {
 	message := Message{
 		MessageType: STORE_RESPONSE,
-		Contact:     contact,
+		From:        from,
 	}
 
 	// change this value in message_handler
@@ -147,6 +147,44 @@ func NewStoreResponseMessage(contact Contact) StoreResponse {
 	return StoreResponse{
 		message,
 		storeSuccess,
+	}
+
+}
+
+type FoundContacts struct {
+	Message
+	Contacts []Contact `json:"contacts"`
+}
+
+func NewFoundContactsMessage(from Contact, contacts []Contact) FoundContacts {
+	message := Message{
+		MessageType: FOUND_CONTACTS,
+		From:        from,
+	}
+
+	return FoundContacts{
+		message,
+		contacts,
+	}
+
+}
+
+type FoundData struct {
+	Message
+	Contacts []Contact `json:"contacts"`
+	Value    string    `json:"value"`
+}
+
+func NewFoundDataMessage(from Contact, contacts []Contact, value string) FoundData {
+	message := Message{
+		MessageType: FOUND_DATA,
+		From:        from,
+	}
+
+	return FoundData{
+		message,
+		contacts,
+		value,
 	}
 
 }
