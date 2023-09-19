@@ -1,6 +1,7 @@
 package kademlia
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -122,6 +123,25 @@ func (kademlia *Kademlia) Join() {
 
 }
 
+func (kademlia *Kademlia) Store(content string) (*Key, error) {
+	// A node finds k nodes to check if they are close to the hash
+
+	key := HashToKey(content)
+	contacts, err := kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(contacts) <= 0 {
+		return nil, errors.New("found no node to store the value in")
+	}
+	for _, contact := range contacts {
+		kademlia.Network.SendStoreMessage(&kademlia.KademliaNode.RoutingTable.Me, &contact, content)
+	}
+	return key, nil
+}
+
 func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error) {
 
 	for i := 0; i < len(contactsToQuery); i++ {
@@ -187,14 +207,6 @@ func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact,
 
 	return candidates.GetContacts(count)
 
-}
-
-func (kademlia *Kademlia) Store(content string) (*Key, error) {
-	// A node finds k nodes to check if they are close to the hash
-
-	key := HashToKey(content)
-	kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
-	return &Key{}, nil
 }
 
 func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool {
