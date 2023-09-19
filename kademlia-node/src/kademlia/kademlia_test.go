@@ -227,3 +227,63 @@ func TestLookupContact2(t *testing.T) {
 	assert.True(t, doesContainAll)
 
 }
+
+func TestLookupDataFindsData(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10020)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10021)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10022)
+
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
+
+	value := "value"
+	key := GetKeyRepresentationOfKademliaId(NewKademliaID("0000000000000000000000000000000000000002")) // Sets the key to be the same as kademlia2's id
+
+	kademlia2.KademliaNode.DataStore.Insert(key, value)
+
+	go bootstrap.Start()
+	go kademlia1.Start()
+	go kademlia2.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4020, false, "", 0)
+
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
+
+	_, data, _ := kademlia.LookupData(key)
+
+	assert.Equal(t, value, data)
+
+}
+
+func TestLookupDataFindsNoData(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10030)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10031)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10032)
+
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
+
+	value := "value"
+	key := HashToKey(value)
+
+	go bootstrap.Start()
+	go kademlia1.Start()
+	go kademlia2.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4030, false, "", 0)
+
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
+
+	list, _, _ := kademlia.LookupData(key)
+	fmt.Println(list)
+
+	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.RoutingTable.Me, bootstrap.KademliaNode.RoutingTable.Me, kademlia.KademliaNode.RoutingTable.Me})
+	assert.True(t, doesContainAll)
+
+}

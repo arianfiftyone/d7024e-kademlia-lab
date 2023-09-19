@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -76,24 +75,24 @@ func HandleCommands(output io.Writer, kademlia *kademlia.Kademlia, commands []st
 }
 
 func Put(kademlia kademlia.Kademlia, content string) {
-	hash, err := kademlia.Store(content) // nothing to return for now
+	// hash, err := kademlia.Store(content) // nothing to return for now
 
-	if err != nil {
-		log.Printf("Error when storing content: %v\n", err)
-	} else {
-		fmt.Printf("Got hash: %s\n", hash)
-	}
+	// if err != nil {
+	// 	log.Printf("Error when storing content: %v\n", err)
+	// } else {
+	// 	fmt.Printf("Got hash: %s\n", hash)
+	// }
 
 }
 
 func Get(kademlia kademlia.Kademlia, key *kademlia.Key) {
-	content, err := kademlia.LookupData(key) // nothing to return for now
+	// content, err := kademlia.LookupData(key) // nothing to return for now
 
-	if err != nil {
-		log.Printf("Error when looking up data %v\n", err)
-	} else {
-		fmt.Printf("Got content: %s\n", content)
-	}
+	// if err != nil {
+	// 	log.Printf("Error when looking up data %v\n", err)
+	// } else {
+	// 	fmt.Printf("Got content: %s\n", content)
+	// }
 }
 
 func Kill() {
