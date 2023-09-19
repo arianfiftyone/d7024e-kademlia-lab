@@ -6,8 +6,12 @@ RUN apt-get install iputils-ping -y
 
 RUN apt-get install -y netcat-traditional
 
+RUN apt-get install -y screen
+
+
 WORKDIR /kademlia-node
 
-COPY ./src ./
+COPY /src ./src
+COPY scripts ./
 
-CMD ["go", "run", "."]
+CMD ["sh", "./create-screen.sh"]

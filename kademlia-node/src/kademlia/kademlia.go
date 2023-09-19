@@ -27,6 +27,7 @@ const (
 	LOOKUP_DATA    LookupType = "LOOKUP_DATA"
 )
 
+// NewKademlia gives new instance of a kademlia participant, it can start lisining for RPC's and join the network.
 func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
@@ -81,14 +82,43 @@ func (kademlia *Kademlia) Join() {
 
 	}
 
-	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootstrapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.Me, kademlia.bootstrapContact)
 	if err != nil {
 		return
 	}
 
 	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
-	kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.me.ID)
+	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
+
+	var lowerBound *KademliaID
+	var highBound *KademliaID
+
+	if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
+		lowerBound = kademlia.bootstrapContact.ID
+		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	} else {
+		lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
+		highBound = kademlia.bootstrapContact.ID
+	}
+
+	randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
+	if err != nil {
+		return
+	}
+	contacts, err = kademlia.LookupContact(randomKademliaIDInRnge)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
 
 }
 
@@ -108,10 +138,10 @@ func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQu
 			switch lookupType {
 
 			case LOOKUP_CONTACT:
-				foundContacts, err = kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.me, &contactToQuery, &targetId)
+				foundContacts, err = kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, &targetId)
 
 			case LOOKUP_DATA:
-				foundContacts, foundValue, err = kademlia.Network.SendFindDataMessage(&kademlia.KademliaNode.RoutingTable.me, &contactToQuery, GetKeyRepresentationOfKademliaId(&targetId))
+				foundContacts, foundValue, err = kademlia.Network.SendFindDataMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, GetKeyRepresentationOfKademliaId(&targetId))
 
 			}
 			if err != nil {
@@ -159,16 +189,16 @@ func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact,
 
 }
 
-func (kademlia *Kademlia) containsAll(first []Contact, second []Contact) bool {
+func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool {
 	result := true
 
-	var secondIds []KademliaID
-	for _, contact := range second {
-		secondIds = append(secondIds, *contact.ID)
+	var firstIds []KademliaID
+	for _, contact := range first {
+		firstIds = append(firstIds, *contact.ID)
 	}
 
-	for _, contact := range first {
-		if !slices.Contains(secondIds, *contact.ID) {
+	for _, contact := range second {
+		if !slices.Contains(firstIds, *contact.ID) {
 			result = false
 			break
 		}
@@ -242,7 +272,7 @@ Loop:
 
 	}
 	mutex.Lock()
-	if len(previousClosestToTargetList) != 0 && kademlia.containsAll(*closestToTargetList, previousClosestToTargetList) || timesFailed >= len(contactsToQuery) || roundFailed {
+	if (len(previousClosestToTargetList) != 0 && kademlia.firstSetContainsAllContactsOfSecondSet(*closestToTargetList, previousClosestToTargetList) && kademlia.firstSetContainsAllContactsOfSecondSet(previousClosestToTargetList, *closestToTargetList)) || timesFailed >= len(contactsToQuery) || roundFailed {
 		*stop = true
 		mutex.Unlock()
 		lookupCompleteChannel <- true
