@@ -8,10 +8,11 @@ RUN apt-get install -y netcat-traditional
 
 RUN apt-get install -y screen
 
-
 WORKDIR /kademlia-node
 
 COPY /src ./src
 COPY scripts ./
 
-CMD ["sh", "./create-screen.sh"]
+RUN cd src
+
+CMD ["go", "run", "."]
