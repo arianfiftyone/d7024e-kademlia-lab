@@ -201,7 +201,7 @@ func TestSendNodeDataMessageNoData(t *testing.T) {
 	contacts, _, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.RoutingTable.Me, &bootstrap.KademliaNode.RoutingTable.Me, key)
 
 	kClosest := bootstrap.KademliaNode.RoutingTable.FindClosestContacts(bootstrap.KademliaNode.RoutingTable.Me.ID, NumberOfClosestNodesToRetrieved)
-	doesContainAll := bootstrap.containsAll(kClosest, contacts)
+	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(kClosest, contacts)
 	assert.True(t, doesContainAll)
 }
 
