@@ -17,7 +17,7 @@ COMMANDS:
 	kill, k      			Kills the node
 	kademliaid, kid 		Get id associated with the node	 
 	help, h      			Output this help prompt
-	clear, c				Clear the terminal
+	clear, c			Clear the terminal
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 							[ MADE BY: arianfiftyone, MrDweller & asta987 ]
