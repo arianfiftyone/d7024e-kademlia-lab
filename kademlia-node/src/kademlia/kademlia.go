@@ -1,6 +1,7 @@
 package kademlia
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/arianfiftyone/src/logger"
@@ -119,6 +120,25 @@ func (kademlia *Kademlia) Join() {
 		kademlia.KademliaNode.RoutingTable.AddContact(contact)
 	}
 
+}
+
+func (kademlia *Kademlia) Store(content string) (*Key, error) {
+	// A node finds k nodes to check if they are close to the hash
+
+	key := HashToKey(content)
+	contacts, err := kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(contacts) <= 0 {
+		return nil, errors.New("found no node to store the value in")
+	}
+	for _, contact := range contacts {
+		kademlia.Network.SendStoreMessage(&kademlia.KademliaNode.RoutingTable.Me, &contact, content)
+	}
+	return key, nil
 }
 
 func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error) {
@@ -333,12 +353,4 @@ func (kademlia *Kademlia) LookupData(key *Key) ([]Contact, string, error) {
 	kClosest, value, err := kademlia.lookup(LOOKUP_DATA, key.GetKademliaIdRepresentationOfKey())
 	return kClosest, value, err
 
-}
-
-func (kademlia *Kademlia) Store(data []byte) {
-	// A node finds k nodes to check if they are close to the hash
-
-	key := HashToKey(string(data[:]))
-	keyContact := NewContact(key.GetKademliaIdRepresentationOfKey(), "", 0)
-	kademlia.LookupContact(keyContact.ID)
 }
