@@ -10,9 +10,6 @@ RUN apt-get install -y screen
 
 WORKDIR /kademlia-node
 
-COPY /src ./src
-COPY scripts ./
-
-RUN cd src
+COPY /src ./
 
 CMD ["go", "run", "."]
