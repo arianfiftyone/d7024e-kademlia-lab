@@ -7,13 +7,20 @@ import (
 	"testing"
 
 	"github.com/arianfiftyone/src/kademlia"
+
 	"github.com/stretchr/testify/assert"
 )
 
-func testCommand(command string) string {
+// Define a function to create a test Kademlia instance
+func createTestKademlia() *kademlia.Kademlia {
+	kademlia := kademlia.NewKademlia("localhost", 9000, true, "10.0.0.1", 100000)
+	return kademlia
+}
+
+func (cli *Cli) testCommand(command string) string {
 	output = bytes.NewBuffer(nil)
 
-	HandleCommands(output, kademlia.NewKademlia("localhost", 9000, true, "10.0.0.1", 100000), []string{command})
+	cli.HandleCommands(output, createTestKademlia(), []string{command})
 	return trimNewlineFromWriterOutput(output)
 }
 
@@ -23,51 +30,71 @@ func trimNewlineFromWriterOutput(output io.Writer) string {
 }
 
 func TestGetCommand(t *testing.T) {
-	assert.Equal(t, noArgsError, testCommand("get"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, noArgsError, cli.testCommand("get"))
 }
 
 func TestAbbreviatedGetCommand(t *testing.T) {
-	assert.Equal(t, noArgsError, testCommand("g"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, noArgsError, cli.testCommand("g"))
 }
 
 func TestPutCommand(t *testing.T) {
-	assert.Equal(t, noArgsError, testCommand("put"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, noArgsError, cli.testCommand("put"))
 }
 
 func TestAbbreviatedPutCommand(t *testing.T) {
-	assert.Equal(t, noArgsError, testCommand("p"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, noArgsError, cli.testCommand("p"))
 }
 
 func TestHelpCommand(t *testing.T) {
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
 	content := HelpPrompt()
-	assert.Equal(t, content, testCommand("help"))
+	assert.Equal(t, content, cli.testCommand("help"))
 }
 
 func TestAbbreviatedHelpCommand(t *testing.T) {
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
 	content := HelpPrompt()
-	assert.Equal(t, content, testCommand("h"))
+	assert.Equal(t, content, cli.testCommand("h"))
 }
 
 func TestKademliaIDCommand(t *testing.T) {
-	assert.Equal(t, "ffffffff00000000000000000000000000000000", testCommand("kademliaid"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, "ffffffff00000000000000000000000000000000", cli.testCommand("kademliaid"))
 }
 
 func TestAbbreviatedKademliaIDCommand(t *testing.T) {
-	assert.Equal(t, "ffffffff00000000000000000000000000000000", testCommand("kid"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, "ffffffff00000000000000000000000000000000", cli.testCommand("kid"))
 }
 
 func TestKillCommand(t *testing.T) {
-	assert.Equal(t, 1, exitCli("kill"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, 1, cli.exitCli("kill"))
 }
 
 func TestAbbreviatedKillCommand(t *testing.T) {
-	assert.Equal(t, 1, exitCli("k"))
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, 1, cli.exitCli("k"))
 }
 
 // `exitCLI` purpose is for testing cases(`kill`) where the function exits with `os.Exit()`
 // and is slightly modified from the source:
 // https://stackoverflow.com/questions/40615641/testing-os-exit-scenarios-in-go-with-coverage-information-c overalls-io-goverall/40801733#40801733
-func exitCli(e string) int {
+func (cli *Cli) exitCli(e string) int {
 	var got int
 	// Save current function and restore at the end:
 	oldExit := exit
@@ -82,6 +109,8 @@ func exitCli(e string) int {
 		exit = oldExit
 	}()
 
-	HandleCommands(output, nil, []string{e})
+	cli.HandleCommands(output, nil, []string{e})
 	return got
 }
+
+// TODO: Add testcase for `clear`-command

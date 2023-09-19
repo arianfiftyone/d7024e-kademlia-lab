@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arianfiftyone/src/kademlia"
+
 	"github.com/arianfiftyone/src/logger"
 )
 
@@ -36,14 +37,14 @@ func NewCli(kademlia *kademlia.Kademlia) *Cli {
 	}
 }
 
-func (cli *Cli) clear() {
-	cmd := exec.Command("clear") //Linux example, its tested
+func (cli *Cli) Clear() {
+	cmd := exec.Command("clear") // Linux tested
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 }
 
 func (cli *Cli) showOldLogs() {
-	cli.clear()
+	cli.Clear()
 	oldLogs := logger.GetOldLogs()
 	for _, log := range oldLogs {
 		fmt.Println(log)
@@ -51,8 +52,6 @@ func (cli *Cli) showOldLogs() {
 }
 
 func (cli *Cli) StartCli(out io.Writer) {
-	fmt.Fprintln(output, "Starting Kademlia CLI...")
-
 	mode := LOG
 	for {
 		if mode == LOG {
@@ -64,8 +63,13 @@ func (cli *Cli) StartCli(out io.Writer) {
 }
 
 func (cli *Cli) LogMode(out io.Writer) Mode {
-	fmt.Fprintln(output, "You are in log mode, enter `i` to change to command mode")
 
+	// Disable echoing to the terminal
+	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+
+	fmt.Fprintln(output, "You are in log mode, press `enter` to change to command mode")
+
+	// Start a goroutine for continuous log display
 	stopLogChannel := make(chan bool)
 	go func() {
 	LogLoop:
@@ -73,22 +77,25 @@ func (cli *Cli) LogMode(out io.Writer) Mode {
 			select {
 			case <-stopLogChannel:
 				break LogLoop
+
+			// Read new log entries
 			case <-time.After(time.Millisecond * 100):
-				log, err := logger.ReadNewLog()
+				logEntry, err := logger.ReadNewLog()
 				if err == nil {
-					fmt.Println(log)
+					fmt.Println(logEntry)
 				}
 			}
 		}
 	}()
 
-	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
-	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
-	b := make([]byte, 1)
-	n, _ := os.Stdin.Read(b)
+	inputBuffer := make([]byte, 1)
+	n, _ := os.Stdin.Read(inputBuffer)
+
 	stopLogChannel <- true
-	if string(b[:n]) == "i" {
-		cli.clear()
+
+	// Toggle between `COMMAND` and `LOG` based on ENTER keypress
+	if string(inputBuffer[:n]) == "\n" {
+		cli.Clear()
 		return COMMAND
 	} else {
 		return LOG
@@ -96,14 +103,18 @@ func (cli *Cli) LogMode(out io.Writer) Mode {
 }
 
 func (cli *Cli) CommandMode(out io.Writer) Mode {
-	fmt.Fprintln(output, "You are in command mode, enter `stop` to change to log mode")
 
+	// Configure the terminal for echo mode
 	exec.Command("stty", "-F", "/dev/tty", "echo").Run()
+
+	fmt.Fprintln(output, "You are in command mode, enter `stop` to change to log mode")
 
 	fmt.Print("$ ")
 
+	// Read user input from stdin
 	reader := bufio.NewReader(input)
 	input, _ := reader.ReadString('\n')
+
 	trimmedInput := trimWhitespace(input)
 	if trimmedInput == "stop" {
 		cli.showOldLogs()
@@ -112,11 +123,10 @@ func (cli *Cli) CommandMode(out io.Writer) Mode {
 	if trimmedInput == "" {
 		return COMMAND
 	} else {
-
 		// Split input into individual commands
 		commands := splitInput(trimmedInput)
 
-		HandleCommands(out, cli.kademlia, commands)
+		cli.HandleCommands(out, cli.kademlia, commands)
 		return COMMAND
 	}
 }
