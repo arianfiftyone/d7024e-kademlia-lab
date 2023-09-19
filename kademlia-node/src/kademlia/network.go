@@ -38,7 +38,7 @@ func (network *NetworkImplementation) Listen() error {
 
 	defer conn.Close()
 
-	logger.Log("Server listeningc " + network.Ip + ":" + strconv.Itoa(network.Port))
+	logger.Log("Server listening " + network.Ip + ":" + strconv.Itoa(network.Port))
 
 	for {
 		data := make([]byte, 1024)
