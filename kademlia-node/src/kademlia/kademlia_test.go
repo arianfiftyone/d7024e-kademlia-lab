@@ -172,3 +172,63 @@ func TestLookupContact2(t *testing.T) {
 	assert.True(t, doesContainAll)
 
 }
+
+func TestLookupDataFindsData(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7020)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7021)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7022)
+
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
+
+	value := "value"
+	key := HashToKey(value)
+
+	kademlia2.KademliaNode.DataStore.Insert(key, value)
+
+	go bootstrap.Start()
+	go kademlia1.Start()
+	go kademlia2.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4020, false, "", 0)
+
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
+
+	_, data, _ := kademlia.LookupData(key)
+
+	assert.Equal(t, value, data)
+
+}
+
+func TestLookupDataFindsNoData(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7030)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7031)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7032)
+
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
+
+	value := "value"
+	key := HashToKey(value)
+
+	go bootstrap.Start()
+	go kademlia1.Start()
+	go kademlia2.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4030, false, "", 0)
+
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
+
+	list, _, _ := kademlia.LookupData(key)
+	fmt.Println(list)
+
+	doesContainAll := bootstrap.containsAll(list, []Contact{kademlia1.KademliaNode.RoutingTable.me, bootstrap.KademliaNode.RoutingTable.me, kademlia.KademliaNode.RoutingTable.me})
+	assert.True(t, doesContainAll)
+
+}

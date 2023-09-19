@@ -39,16 +39,6 @@ func (network *NetworkImplementation) Listen() error {
 
 	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
 
-	// //TEST
-	// kademlia := &Kademlia{
-	// 	network,
-	// 	NewKademliaNode(network.Ip, network.Port),
-	// }
-	// contact := Test(kademlia)
-	// list, _ := kademlia.LookupContact(contact)
-	// fmt.Println(list)
-	// //
-
 	for {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])

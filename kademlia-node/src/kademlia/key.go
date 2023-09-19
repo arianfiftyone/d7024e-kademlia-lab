@@ -2,6 +2,7 @@ package kademlia
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 )
 
 const (
@@ -22,5 +23,16 @@ func HashToKey(value string) *Key {
 }
 
 func (key *Key) GetKademliaIdRepresentationOfKey() *KademliaID {
-	return NewKademliaID(string(key.Hash[:]))
+	hashInHex := hex.EncodeToString(key.Hash[:])
+	return NewKademliaID(hashInHex)
+}
+
+func GetKeyRepresentationOfKademliaId(id *KademliaID) *Key {
+	str := id.String()
+	decoded, _ := hex.DecodeString(str)
+	key := Key{}
+	for i := 0; i < IDLength; i++ {
+		key.Hash[i] = decoded[i]
+	}
+	return &key
 }
