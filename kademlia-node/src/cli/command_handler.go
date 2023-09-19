@@ -86,7 +86,7 @@ func Put(kademlia kademlia.Kademlia, content string) {
 	if err != nil {
 		log.Printf("Error when storing content: %v\n", err)
 	} else {
-		fmt.Printf("Got hash: %s\n", key.Hash)
+		fmt.Printf("Got hash: %s\n", key.GetHashString())
 	}
 
 }
