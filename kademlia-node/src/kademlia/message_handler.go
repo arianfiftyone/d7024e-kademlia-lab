@@ -20,7 +20,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 	err := json.Unmarshal(rawMessage, &message)
 	if err != nil {
-		logger.Log("Error when unmarshaling `message` message: " + err.Error() + "\n")
+		logger.Log("Error when unmarshaling `message` message: " + err.Error())
 		return nil, err
 	}
 	logger.Log("MessageType: " + string(message.MessageType))
@@ -43,7 +43,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(pong)
 		if err != nil {
-			logger.Log("Error when unmarshaling `pong` message: " + err.Error() + "\n")
+			logger.Log("Error when unmarshaling `pong` message: " + err.Error())
 			return nil, err
 		}
 
@@ -59,7 +59,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList))
 		if err != nil {
-			logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error() + "\n")
+			logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 			return nil, err
 		}
 
@@ -77,7 +77,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
 			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
 			if err != nil {
-				logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error() + "\n")
+				logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 				return nil, err
 			}
 			return bytes, nil
@@ -85,7 +85,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		} else {
 			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, nil, data))
 			if err != nil {
-				logger.Log("Error when marshaling `data`: " + err.Error() + "\n")
+				logger.Log("Error when marshaling `data`: " + err.Error())
 				return nil, err
 			}
 
@@ -104,7 +104,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(newStoreResponse)
 		if err != nil {
-			logger.Log("Error when marshaling `newStoreResponse`: " + err.Error() + "\n")
+			logger.Log("Error when marshaling `newStoreResponse`: " + err.Error())
 			return nil, err
 		}
 
@@ -114,7 +114,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(errorMessage)
 		if err != nil {
-			logger.Log("Error when marshaling `errorMessage`: " + err.Error() + "\n")
+			logger.Log("Error when marshaling `errorMessage`: " + err.Error())
 			return nil, err
 		}
 		return bytes, nil

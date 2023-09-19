@@ -264,7 +264,7 @@ Loop:
 			break Loop
 
 		case queryFailedError := <-queryFailedChannel:
-			logger.Log("Failed to find node in channel: " + queryFailedError.Error() + "\n")
+			logger.Log("Failed to find node in channel: " + queryFailedError.Error())
 			timesFailed++
 
 		}
@@ -314,7 +314,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 		case foundContacts := <-foundContactsChannel:
 			kClosest = kademlia.getKClosest(kClosest, foundContacts, targetId, NumberOfClosestNodesToRetrieved)
 		case queryFailedError := <-queryFailedChannel:
-			logger.Log("Failed to find node in channel: " + queryFailedError.Error() + "\n")
+			logger.Log("Failed to find node in channel: " + queryFailedError.Error())
 
 		}
 

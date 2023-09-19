@@ -32,26 +32,26 @@ func (network *NetworkImplementation) Listen() error {
 		Port: network.Port,
 	})
 	if err != nil {
-		logger.Log("Failed to listen for UDP packets: " + err.Error() + "\n")
+		logger.Log("Failed to listen for UDP packets: " + err.Error())
 		return err
 	}
 
 	defer conn.Close()
 
-	logger.Log("Server listeningc " + network.Ip + ":" + strconv.Itoa(network.Port) + "\n")
+	logger.Log("Server listeningc " + network.Ip + ":" + strconv.Itoa(network.Port))
 
 	for {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
 		if err != nil {
-			logger.Log("Failed to read from UDP: " + err.Error() + "\n")
+			logger.Log("Failed to read from UDP: " + err.Error())
 			return err
 		}
 
 		go func(myConn *net.UDPConn) {
 			response, err := network.MessageHandler.HandleMessage(data[:len])
 			if err != nil {
-				logger.Log("Failed to handle response message: " + err.Error() + "\n")
+				logger.Log("Failed to handle response message: " + err.Error())
 				return
 			}
 			myConn.WriteToUDP(response, remote)
@@ -69,14 +69,14 @@ func (network *NetworkImplementation) Send(ip string, port int, message []byte, 
 	})
 
 	if err != nil {
-		logger.Log("Failed to connect via UDP: " + err.Error() + "\n")
+		logger.Log("Failed to connect via UDP: " + err.Error())
 		return nil, err
 	}
 
 	// Send a message to the server
 	_, err = conn.Write(message)
 	if err != nil {
-		logger.Log("Failed to send a message to the server: " + err.Error() + "\n")
+		logger.Log("Failed to send a message to the server: " + err.Error())
 		return nil, err
 	}
 
@@ -110,19 +110,19 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 	ping := NewPingMessage(*from)
 	bytes, err := json.Marshal(ping)
 	if err != nil {
-		logger.Log("Failed to send a ping message to the server: " + err.Error() + "\n")
+		logger.Log("Failed to send a ping message to the server: " + err.Error())
 		return err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		logger.Log("Ping failed: " + err.Error() + "\n")
+		logger.Log("Ping failed: " + err.Error())
 		return err
 	}
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != PONG {
-		logger.Log("Ping failed: " + errUnmarshal.Error() + "\n")
+		logger.Log("Ping failed: " + errUnmarshal.Error())
 		return errUnmarshal
 	}
 
@@ -130,7 +130,7 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 
 	errUnmarshalAckPing := json.Unmarshal(response, &pong)
 	if errUnmarshalAckPing != nil {
-		logger.Log("Ping failed: " + errUnmarshalAckPing.Error() + "\n")
+		logger.Log("Ping failed: " + errUnmarshalAckPing.Error())
 		return errUnmarshalAckPing
 	}
 
@@ -143,27 +143,27 @@ func (network *NetworkImplementation) SendFindContactMessage(from *Contact, cont
 	findN := NewFindNodeMessage(*from, id)
 	bytes, err := json.Marshal(findN)
 	if err != nil {
-		logger.Log("Error when marshaling `findN`: " + err.Error() + "\n")
+		logger.Log("Error when marshaling `findN`: " + err.Error())
 		return nil, err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		logger.Log("Find node failed: " + err.Error() + "\n")
+		logger.Log("Find node failed: " + err.Error())
 		return nil, err
 	}
 
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != FOUND_CONTACTS {
-		logger.Log("Find contact failed: " + errUnmarshal.Error() + "\n")
+		logger.Log("Find contact failed: " + errUnmarshal.Error())
 		return nil, errUnmarshal
 	}
 
 	var arrayOfContacts FoundContacts
 	errUnmarshalFoundContacts := json.Unmarshal(response, &arrayOfContacts)
 	if errUnmarshalFoundContacts != nil {
-		logger.Log("Error when unmarshaling 'foundContacts' message: " + errUnmarshalFoundContacts.Error() + "\n")
+		logger.Log("Error when unmarshaling 'foundContacts' message: " + errUnmarshalFoundContacts.Error())
 		return nil, errUnmarshalFoundContacts
 	}
 
@@ -179,21 +179,21 @@ func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		logger.Log("Find data failed: " + err.Error() + "\n")
+		logger.Log("Find data failed: " + err.Error())
 		return nil, "", err
 	}
 
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != FOUND_DATA {
-		logger.Log("Find data failed: " + errUnmarshal.Error() + "\n")
+		logger.Log("Find data failed: " + errUnmarshal.Error())
 		return nil, "", errUnmarshal
 	}
 
 	var data FoundData
 	errUnmarshalFoundData := json.Unmarshal(response, &data)
 	if errUnmarshalFoundData != nil {
-		logger.Log("Error when unmarshaling 'foundData' message: " + errUnmarshalFoundData.Error() + "\n")
+		logger.Log("Error when unmarshaling 'foundData' message: " + errUnmarshalFoundData.Error())
 		return nil, "", errUnmarshalFoundData
 	}
 
@@ -211,20 +211,20 @@ func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *C
 	store := NewStoreMessage(*from, network.Ip, key, contact.ID, value)
 	bytes, err := json.Marshal(store)
 	if err != nil {
-		logger.Log("Error when marshaling `store` message: " + err.Error() + "\n")
+		logger.Log("Error when marshaling `store` message: " + err.Error())
 		return false
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		logger.Log("Store failed: " + err.Error() + "\n")
+		logger.Log("Store failed: " + err.Error())
 		return false
 	}
 
 	var storeResponse StoreResponse
 	err = json.Unmarshal(response, &storeResponse)
 	if err != nil {
-		logger.Log("Error when unmarshaling `storeResponse` message: " + err.Error() + "\n")
+		logger.Log("Error when unmarshaling `storeResponse` message: " + err.Error())
 		return false
 	}
 
