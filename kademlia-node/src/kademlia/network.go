@@ -3,9 +3,8 @@ package kademlia
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/arianfiftyone/src/logger"
@@ -33,26 +32,26 @@ func (network *NetworkImplementation) Listen() error {
 		Port: network.Port,
 	})
 	if err != nil {
-		log.Printf("Failed to listen for UDP packets: %v\n", err)
+		logger.Log("Failed to listen for UDP packets: " + err.Error())
 		return err
 	}
 
 	defer conn.Close()
 
-	fmt.Printf("server listening %s:%d\n", network.Ip, network.Port)
+	logger.Log("Server listeningc " + network.Ip + ":" + strconv.Itoa(network.Port))
 
 	for {
 		data := make([]byte, 1024)
 		len, remote, err := conn.ReadFromUDP(data[:])
 		if err != nil {
-			log.Printf("Failed to read from UDP: %v\n", err)
+			logger.Log("Failed to read from UDP: " + err.Error())
 			return err
 		}
 
 		go func(myConn *net.UDPConn) {
 			response, err := network.MessageHandler.HandleMessage(data[:len])
 			if err != nil {
-				log.Printf("Failed to handle response message: %v\n", err)
+				logger.Log("Failed to handle response message: " + err.Error())
 				return
 			}
 			myConn.WriteToUDP(response, remote)
@@ -70,14 +69,14 @@ func (network *NetworkImplementation) Send(ip string, port int, message []byte, 
 	})
 
 	if err != nil {
-		log.Printf("Failed to connect via UDP: %v\n", err)
+		logger.Log("Failed to connect via UDP: " + err.Error())
 		return nil, err
 	}
 
 	// Send a message to the server
 	_, err = conn.Write(message)
 	if err != nil {
-		log.Printf("Failed to send a message to the server: %v\n", err)
+		logger.Log("Failed to send a message to the server: " + err.Error())
 		return nil, err
 	}
 
@@ -111,19 +110,19 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 	ping := NewPingMessage(*from)
 	bytes, err := json.Marshal(ping)
 	if err != nil {
-		log.Printf("Failed to send ping message to the server: %v\n", err)
+		logger.Log("Failed to send a ping message to the server: " + err.Error())
 		return err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		log.Printf("Ping failed: %v\n", err)
+		logger.Log("Ping failed: " + err.Error())
 		return err
 	}
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != PONG {
-		log.Printf("Ping failed: %v\n", errUnmarshal)
+		logger.Log("Ping failed: " + errUnmarshal.Error())
 		return errUnmarshal
 	}
 
@@ -131,7 +130,7 @@ func (network *NetworkImplementation) SendPingMessage(from *Contact, contact *Co
 
 	errUnmarshalAckPing := json.Unmarshal(response, &pong)
 	if errUnmarshalAckPing != nil {
-		log.Printf("Ping failed: %v\n", errUnmarshalAckPing)
+		logger.Log("Ping failed: " + errUnmarshalAckPing.Error())
 		return errUnmarshalAckPing
 	}
 
@@ -144,27 +143,27 @@ func (network *NetworkImplementation) SendFindContactMessage(from *Contact, cont
 	findN := NewFindNodeMessage(*from, id)
 	bytes, err := json.Marshal(findN)
 	if err != nil {
-		log.Printf("Error when marshaling `findN`: %v\n", err)
+		logger.Log("Error when marshaling `findN`: " + err.Error())
 		return nil, err
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		log.Printf("Find node failed: %v\n", err)
+		logger.Log("Find node failed: " + err.Error())
 		return nil, err
 	}
 
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != FOUND_CONTACTS {
-		log.Printf("Failed to find contacts: %v\n", errUnmarshal)
+		logger.Log("Find contact failed: " + errUnmarshal.Error())
 		return nil, errUnmarshal
 	}
 
 	var arrayOfContacts FoundContacts
 	errUnmarshalFoundContacts := json.Unmarshal(response, &arrayOfContacts)
 	if errUnmarshalFoundContacts != nil {
-		log.Printf("Failed to find contacts: %v\n", errUnmarshalFoundContacts)
+		logger.Log("Error when unmarshaling 'foundContacts' message: " + errUnmarshalFoundContacts.Error())
 		return nil, errUnmarshalFoundContacts
 	}
 
@@ -180,21 +179,21 @@ func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		log.Printf("Find data failed: %v\n", err)
+		logger.Log("Find data failed: " + err.Error())
 		return nil, "", err
 	}
 
 	var message Message
 	errUnmarshal := json.Unmarshal(response, &message)
 	if errUnmarshal != nil || message.MessageType != FOUND_DATA {
-		log.Printf("Failed to find data: %v\n", errUnmarshal)
+		logger.Log("Find data failed: " + errUnmarshal.Error())
 		return nil, "", errUnmarshal
 	}
 
 	var data FoundData
 	errUnmarshalFoundData := json.Unmarshal(response, &data)
 	if errUnmarshalFoundData != nil {
-		log.Printf("Failed to find data: %v\n", errUnmarshalFoundData)
+		logger.Log("Error when unmarshaling 'foundData' message: " + errUnmarshalFoundData.Error())
 		return nil, "", errUnmarshalFoundData
 	}
 
@@ -212,20 +211,20 @@ func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *C
 	store := NewStoreMessage(*from, network.Ip, key, contact.ID, value)
 	bytes, err := json.Marshal(store)
 	if err != nil {
-		log.Printf("Error when marshaling `store` message: %v\n", err)
+		logger.Log("Error when marshaling `store` message: " + err.Error())
 		return false
 	}
 
 	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
 	if err != nil {
-		log.Printf("Store failed: %v\n", err)
+		logger.Log("Store failed: " + err.Error())
 		return false
 	}
 
 	var storeResponse StoreResponse
 	err = json.Unmarshal(response, &storeResponse)
 	if err != nil {
-		log.Printf("Error when unmarshaling `storeResponse` message: %v\n", err)
+		logger.Log("Error when unmarshaling `storeResponse` message: " + err.Error())
 		return false
 	}
 

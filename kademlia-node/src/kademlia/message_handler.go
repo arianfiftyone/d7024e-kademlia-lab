@@ -2,8 +2,6 @@ package kademlia
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/arianfiftyone/src/logger"
@@ -22,7 +20,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 	err := json.Unmarshal(rawMessage, &message)
 	if err != nil {
-		log.Printf("Error when unmarshaling `message` message: %v\n", err)
+		logger.Log("Error when unmarshaling `message` message: " + err.Error())
 		return nil, err
 	}
 	logger.Log("MessageType: " + string(message.MessageType))
@@ -45,7 +43,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(pong)
 		if err != nil {
-			log.Printf("Error when marshaling `pong` message: %v\n", err)
+			logger.Log("Error when unmarshaling `pong` message: " + err.Error())
 			return nil, err
 		}
 
@@ -56,12 +54,12 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &findN)
 
-		fmt.Println(findN.From.Ip + " wants to find your k closest nodes.")
+		logger.Log(findN.From.Ip + " wants to find your k closest nodes.")
 		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
 
 		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList))
 		if err != nil {
-			log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
+			logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 			return nil, err
 		}
 
@@ -72,14 +70,14 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &findData)
 
-		fmt.Println(findData.FromAddress + " wants to find a value.")
+		logger.Log(findData.FromAddress + " wants to find a value.")
 
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
 			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
 			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
 			if err != nil {
-				log.Printf("Error when marshaling `closetsKNodesList`: %v\n", err)
+				logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 				return nil, err
 			}
 			return bytes, nil
@@ -87,7 +85,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		} else {
 			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, nil, data))
 			if err != nil {
-				log.Printf("Error when marshaling `data`: %v\n", err)
+				logger.Log("Error when marshaling `data`: " + err.Error())
 				return nil, err
 			}
 
@@ -101,12 +99,12 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		messageHandler.kademliaNode.DataStore.Insert(store.Key, store.Value)
 
-		fmt.Println(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
+		logger.Log(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
 
 		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(newStoreResponse)
 		if err != nil {
-			log.Printf("Error when marshaling `newStoreResponse`: %v\n", err)
+			logger.Log("Error when marshaling `newStoreResponse`: " + err.Error())
 			return nil, err
 		}
 
@@ -116,7 +114,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(errorMessage)
 		if err != nil {
-			log.Printf("Error when marshaling `errorMessage`: %v\n", err)
+			logger.Log("Error when marshaling `errorMessage`: " + err.Error())
 			return nil, err
 		}
 		return bytes, nil
