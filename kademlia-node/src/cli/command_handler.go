@@ -94,12 +94,12 @@ func Put(kademlia kademlia.Kademlia, content string) {
 }
 
 func Get(kademlia kademlia.Kademlia, key *kademlia.Key) {
-	content, _, err := kademlia.LookupData(key)
+	_, value, err := kademlia.LookupData(key)
 
 	if err != nil {
 		log.Printf("Error when looking up data %v\n", err)
 	} else {
-		fmt.Printf("Got content: %s\n", content)
+		fmt.Printf("Got content: %s\n", value)
 	}
 }
 
