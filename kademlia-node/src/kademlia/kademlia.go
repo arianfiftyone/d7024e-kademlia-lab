@@ -1,10 +1,9 @@
 package kademlia
 
 import (
-	"fmt"
-	"log"
 	"sync"
 
+	"github.com/arianfiftyone/src/logger"
 	"golang.org/x/exp/slices"
 )
 
@@ -77,7 +76,7 @@ func (kademlia *Kademlia) Start() {
 func (kademlia *Kademlia) Join() {
 
 	if kademlia.isBootstrap {
-		fmt.Println("You are the bootstrap node!")
+		logger.Log("You are the bootstrap node!")
 		return
 
 	}
@@ -265,7 +264,7 @@ Loop:
 			break Loop
 
 		case queryFailedError := <-queryFailedChannel:
-			log.Printf("Failed to find node in channel: %v\n", queryFailedError)
+			logger.Log("Failed to find node in channel: " + queryFailedError.Error() + "\n")
 			timesFailed++
 
 		}
@@ -315,7 +314,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 		case foundContacts := <-foundContactsChannel:
 			kClosest = kademlia.getKClosest(kClosest, foundContacts, targetId, NumberOfClosestNodesToRetrieved)
 		case queryFailedError := <-queryFailedChannel:
-			log.Printf("Failed find node: %v\n", queryFailedError)
+			logger.Log("Failed to find node in channel: " + queryFailedError.Error() + "\n")
 
 		}
 
