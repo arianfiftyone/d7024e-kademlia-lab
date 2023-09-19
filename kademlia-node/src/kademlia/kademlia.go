@@ -23,6 +23,7 @@ const (
 	NumberOfAlphaContacts = 3
 )
 
+// NewKademlia gives new instance of a kademlia participant, it can start lisining for RPC's and join the network.
 func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
@@ -84,7 +85,36 @@ func (kademlia *Kademlia) Join() {
 
 	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
-	kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
+	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
+
+	var lowerBound *KademliaID
+	var highBound *KademliaID
+
+	if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
+		lowerBound = kademlia.bootstrapContact.ID
+		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	} else {
+		lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
+		highBound = kademlia.bootstrapContact.ID
+	}
+
+	randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
+	if err != nil {
+		return
+	}
+	contacts, err = kademlia.LookupContact(randomKademliaIDInRnge)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
 
 }
 
@@ -135,16 +165,16 @@ func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact,
 
 }
 
-func (kademlia *Kademlia) containsAll(first []Contact, second []Contact) bool {
+func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool {
 	result := true
 
-	var secondIds []KademliaID
-	for _, contact := range second {
-		secondIds = append(secondIds, *contact.ID)
+	var firstIds []KademliaID
+	for _, contact := range first {
+		firstIds = append(firstIds, *contact.ID)
 	}
 
-	for _, contact := range first {
-		if !slices.Contains(secondIds, *contact.ID) {
+	for _, contact := range second {
+		if !slices.Contains(firstIds, *contact.ID) {
 			result = false
 			break
 		}
@@ -209,7 +239,7 @@ func (kademlia *Kademlia) lookupRound(targetId *KademliaID, lookupCompleteChanne
 
 	}
 	mutex.Lock()
-	if (len(previousClosestToTargetList) != 0 && kademlia.containsAll(*closestToTargetList, previousClosestToTargetList)) || timesFailed >= len(contactsToQuery) {
+	if (len(previousClosestToTargetList) != 0 && kademlia.firstSetContainsAllContactsOfSecondSet(*closestToTargetList, previousClosestToTargetList) && kademlia.firstSetContainsAllContactsOfSecondSet(previousClosestToTargetList, *closestToTargetList)) || timesFailed >= len(contactsToQuery) {
 		*stop = true
 		mutex.Unlock()
 		lookupCompleteChannel <- true
