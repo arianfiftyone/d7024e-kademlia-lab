@@ -24,7 +24,7 @@ var (
 // `output` is the io.Writer used for data output.
 // `kademlia` represents the Kademlia node associated with this CLI
 // `commands` is a slice of program commands.
-func (cli *Cli) HandleCommands(output io.Writer, kademlia *kademlia.Kademlia, commands []string) {
+func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kademlia, commands []string) {
 
 	numArgs := len(commands)
 	command := strings.ToLower(commands[0])
@@ -33,16 +33,14 @@ func (cli *Cli) HandleCommands(output io.Writer, kademlia *kademlia.Kademlia, co
 
 	case "put", "p":
 		if numArgs == 2 {
-			// Put(*kademlia, commands[1])
-			fmt.Printf("PUT is not implemented yet: %s\n", commands[1])
+			Put(*kademliaInstance, commands[1])
 		} else {
 			fmt.Fprintln(output, noArgsError)
 		}
 
 	case "get", "g":
 		if numArgs == 2 {
-			// Get(*kademlia, commands[1])
-			fmt.Printf("GET is not implemented yet: %s\n", commands[1])
+			Get(*kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademlia.NewKademliaID(commands[1])))
 		} else {
 			fmt.Fprintln(output, noArgsError)
 		}
@@ -55,7 +53,7 @@ func (cli *Cli) HandleCommands(output io.Writer, kademlia *kademlia.Kademlia, co
 
 	case "kademliaid", "kid":
 		if numArgs == 1 {
-			hexRepresentation := *kademlia.KademliaNode.RoutingTable.Me.ID
+			hexRepresentation := *kademliaInstance.KademliaNode.RoutingTable.Me.ID
 			hexStringRepresentation := hexRepresentation.String()
 			fmt.Fprintln(output, hexStringRepresentation)
 		} else {
@@ -83,12 +81,12 @@ func (cli *Cli) HandleCommands(output io.Writer, kademlia *kademlia.Kademlia, co
 }
 
 func Put(kademlia kademlia.Kademlia, content string) {
-	hash, err := kademlia.Store(content)
+	key, err := kademlia.Store(content)
 
 	if err != nil {
 		log.Printf("Error when storing content: %v\n", err)
 	} else {
-		fmt.Printf("Got hash: %s\n", hash)
+		fmt.Printf("Got hash: %s\n", key.Hash)
 	}
 
 }
@@ -98,8 +96,12 @@ func Get(kademlia kademlia.Kademlia, key *kademlia.Key) {
 
 	if err != nil {
 		log.Printf("Error when looking up data %v\n", err)
-	} else {
+		return
+	}
+
+	if value != "" {
 		fmt.Printf("Got content: %s\n", value)
+		return
 	}
 }
 
