@@ -23,7 +23,7 @@ const (
 	NumberOfAlphaContacts = 3
 )
 
-// NewKademlia gives new
+// NewKademlia gives new instance of a kademlia participant, it can start lisining for RPC's and join the network.
 func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
@@ -78,14 +78,14 @@ func (kademlia *Kademlia) Join() {
 
 	}
 
-	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.me, kademlia.bootstrapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.Me, kademlia.bootstrapContact)
 	if err != nil {
 		return
 	}
 
 	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
 
-	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.me.ID)
+	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (kademlia *Kademlia) Join() {
 	var lowerBound *KademliaID
 	var highBound *KademliaID
 
-	if kademlia.KademliaNode.RoutingTable.me.ID.Less(kademlia.bootstrapContact.ID) {
+	if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
 		lowerBound = kademlia.bootstrapContact.ID
 		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 	} else {
@@ -124,7 +124,7 @@ func (kademlia *Kademlia) QueryAlphaContacts(contactsToQuery []Contact, queriedC
 			mutex.Lock()
 			*queriedContacts = append(*queriedContacts, contactToQuery)
 			mutex.Unlock()
-			foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.me, &contactToQuery, &targetId)
+			foundContacts, err := kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, &targetId)
 
 			if err != nil {
 				queryFailedChannel <- err
@@ -286,12 +286,14 @@ func (kademlia *Kademlia) LookupContact(targetId *KademliaID) ([]Contact, error)
 	return kClosest, nil
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
+func (kademlia *Kademlia) LookupData(key *Key) (string, error) {
+
+	return "", nil
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
-	// A node finds k nodes to check if they are close to the hash
+func (kademlia *Kademlia) Store(content string) (*Key, error) {
+
+	return &Key{}, nil
 }
 
 func findClosestNode(arr []Contact) Contact {

@@ -52,7 +52,7 @@ func (kademliaNode *KademliaNode) updateRoutingTable(contact Contact) {
 		lastContact := bucket.list.Back().Value.(Contact)
 
 		// Ping the last node in the bucket, replace if it does not respond otherwize do nothing
-		err := kademliaNode.Network.SendPingMessage(&kademliaNode.RoutingTable.me, &lastContact)
+		err := kademliaNode.Network.SendPingMessage(&kademliaNode.RoutingTable.Me, &lastContact)
 		if err != nil {
 			return
 

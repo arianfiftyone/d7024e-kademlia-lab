@@ -19,10 +19,10 @@ func TestJoinWithBootstrapOnly(t *testing.T) {
 
 	kademlia.Join()
 
-	contact := kademlia.KademliaNode.RoutingTable.me
+	contact := kademlia.KademliaNode.RoutingTable.Me
 	assert.Equal(t, contact.ID, kademliaBootsrap.KademliaNode.RoutingTable.FindClosestContacts(contact.ID, 1)[0].ID, "The new node must be in the bootstraps routing table.")
 
-	bootstrapContact := kademliaBootsrap.KademliaNode.RoutingTable.me
+	bootstrapContact := kademliaBootsrap.KademliaNode.RoutingTable.Me
 	assert.Equal(t, bootstrapContact.ID, kademlia.KademliaNode.RoutingTable.FindClosestContacts(bootstrapContact.ID, 1)[0].ID, "The bootsrapt must be in the new nodes routing table.")
 
 }
@@ -60,22 +60,22 @@ func TestJoinWithMultipleNodes(t *testing.T) {
 	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
 	kademlia3 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "127.0.0.1", 7003)
 
-	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
-	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
-	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
+	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
+	kademliaBootsrap.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.Me)
 
 	go kademliaBootsrap.Start()
 
 	time.Sleep(time.Second)
 
-	kademlia := CreateMockedJoinKademlia(NewKademliaID("0000000000000000000000000000000000000000"), "127.0.0.1", 2001, &kademliaBootsrap.KademliaNode.RoutingTable.me)
+	kademlia := CreateMockedJoinKademlia(NewKademliaID("0000000000000000000000000000000000000000"), "127.0.0.1", 2001, &kademliaBootsrap.KademliaNode.RoutingTable.Me)
 
 	kademlia.Join()
 
-	contacts := kademlia.KademliaNode.RoutingTable.FindClosestContacts(kademlia.KademliaNode.RoutingTable.me.ID, 20)
+	contacts := kademlia.KademliaNode.RoutingTable.FindClosestContacts(kademlia.KademliaNode.RoutingTable.Me.ID, 20)
 	fmt.Println(contacts)
-	doesContainAll := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia1.KademliaNode.RoutingTable.me, kademlia2.KademliaNode.RoutingTable.me})
-	containsKademlia3 := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia3.KademliaNode.RoutingTable.me})
+	doesContainAll := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia1.KademliaNode.RoutingTable.Me, kademlia2.KademliaNode.RoutingTable.Me})
+	containsKademlia3 := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia3.KademliaNode.RoutingTable.Me})
 
 	assert.True(t, doesContainAll && containsKademlia3)
 
@@ -131,7 +131,7 @@ func TestLookupContact(t *testing.T) {
 
 	kademlia := NewKademlia("127.0.0.1", 3001, false, "", 0)
 
-	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
 
 	list, _ := kademlia.LookupContact(contact1.ID)
 
@@ -178,32 +178,32 @@ func TestLookupContact2(t *testing.T) {
 	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 7005)
 	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 7006)
 
-	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
-	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.Me)
+	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.Me)
 
-	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
-	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
-	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
+	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.Me)
+	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.Me)
+	kademlia6.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
 
-	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
-	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
-	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.Me)
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.Me)
+	kademlia5.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.Me)
 
-	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
-	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
-	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.Me)
+	kademlia4.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.Me)
 
-	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.me)
-	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
-	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia5.KademliaNode.RoutingTable.Me)
+	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
+	kademlia3.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
 
-	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.me)
-	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
-	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.me)
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia6.KademliaNode.RoutingTable.Me)
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.Me)
+	kademlia2.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
 
-	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.me)
-	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.me)
-	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia4.KademliaNode.RoutingTable.Me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia3.KademliaNode.RoutingTable.Me)
+	kademlia1.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
 
 	go bootstrap.Start()
 	go kademlia1.Start()
@@ -216,14 +216,14 @@ func TestLookupContact2(t *testing.T) {
 
 	kademlia := NewKademlia("127.0.0.1", 4000, false, "", 0)
 
-	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.me)
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
 
-	list, _ := kademlia.LookupContact(kademlia1.KademliaNode.RoutingTable.me.ID)
+	list, _ := kademlia.LookupContact(kademlia1.KademliaNode.RoutingTable.Me.ID)
 
 	fmt.Println("closest To Target List")
 	fmt.Println(list)
 
-	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.RoutingTable.me, kademlia2.KademliaNode.RoutingTable.me, kademlia3.KademliaNode.RoutingTable.me})
+	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.RoutingTable.Me, kademlia2.KademliaNode.RoutingTable.Me, kademlia3.KademliaNode.RoutingTable.Me})
 	assert.True(t, doesContainAll)
 
 }
