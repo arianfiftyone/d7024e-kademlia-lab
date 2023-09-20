@@ -16,9 +16,13 @@ type Kademlia struct {
 	bootstrapContact *Contact
 }
 
+type Lock struct {
+	mutex sync.Mutex
+}
+
 type LookupType string
 
-var mutex sync.Mutex
+var lookupMutex sync.Mutex
 
 const (
 	BootstrapKademliaID   = "FFFFFFFF00000000000000000000000000000000"
@@ -79,51 +83,26 @@ func (kademlia *Kademlia) refresh() {
 	var lowerBound *KademliaID
 	var highBound *KademliaID
 
-	for i := 0; i < 1; i++ {
-		if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
-			lowerBound = kademlia.bootstrapContact.ID
-			highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-		} else {
-			lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
-			highBound = kademlia.bootstrapContact.ID
-		}
-
-		randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
-		if err != nil {
-			return
-		}
-		contacts, err := kademlia.LookupContact(randomKademliaIDInRnge)
-		if err != nil {
-			return
-		}
-		for _, contact := range contacts {
-			kademlia.KademliaNode.RoutingTable.AddContact(contact)
-		}
-
+	if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
+		lowerBound = kademlia.bootstrapContact.ID
+		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	} else {
+		lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
+		highBound = kademlia.bootstrapContact.ID
 	}
 
-	for i := 0; i < 0; i++ {
-		if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
-			lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
-			highBound = kademlia.KademliaNode.RoutingTable.Me.ID
-		} else {
-			lowerBound = kademlia.KademliaNode.RoutingTable.Me.ID
-			highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-		}
-
-		randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
-		if err != nil {
-			return
-		}
-		contacts, err := kademlia.LookupContact(randomKademliaIDInRnge)
-		if err != nil {
-			return
-		}
-		for _, contact := range contacts {
-			kademlia.KademliaNode.RoutingTable.AddContact(contact)
-		}
-
+	randomKademliaIDInRnge, err := NewRandomKademliaIDInRange(lowerBound, highBound)
+	if err != nil {
+		return
 	}
+	contacts, err := kademlia.LookupContact(randomKademliaIDInRnge)
+	if err != nil {
+		return
+	}
+	for _, contact := range contacts {
+		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+	}
+
 }
 
 func (kademlia *Kademlia) Join() {
@@ -171,7 +150,7 @@ func (kademlia *Kademlia) Store(content string) (*Key, error) {
 	return key, nil
 }
 
-func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error) {
+func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error, lock *Lock) {
 
 	for i := 0; i < len(contactsToQuery); i++ {
 		go func(contactToQuery Contact) {
@@ -189,9 +168,9 @@ func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQu
 
 			}
 
-			mutex.Lock()
+			lock.mutex.Lock()
 			*queriedContacts = append(*queriedContacts, contactToQuery)
-			mutex.Unlock()
+			lock.mutex.Unlock()
 
 			if err != nil {
 				queryFailedChannel <- err
@@ -255,8 +234,8 @@ func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact
 	return result
 }
 
-func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closestToTargetList *[]Contact) []Contact {
-	mutex.Lock()
+func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) []Contact {
+	lock.mutex.Lock()
 	contactsToQuery := []Contact{}
 	currentAmountToQuery := 0
 	for _, contact := range *closestToTargetList {
@@ -275,37 +254,37 @@ func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closest
 			currentAmountToQuery++
 		}
 	}
-	mutex.Unlock()
+	lock.mutex.Unlock()
 	return contactsToQuery
 }
 
-func (kademlia *Kademlia) lookupRound(lookupType LookupType, targetId *KademliaID, lookupCompleteChannel chan bool, lookupDataChannel chan string, stop *bool, previousClosestToTargetList []Contact, queriedContacts *[]Contact, closestToTargetList *[]Contact) {
-	contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList)
-	mutex.Lock()
+func (kademlia *Kademlia) lookupRound(lookupType LookupType, targetId *KademliaID, lookupCompleteChannel chan bool, lookupDataChannel chan string, stop *bool, previousClosestToTargetList []Contact, queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) {
+	contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList, lock)
+	lock.mutex.Lock()
 	if *stop {
-		mutex.Unlock()
+		lock.mutex.Unlock()
 		return
 	}
-	mutex.Unlock()
+	lock.mutex.Unlock()
 
 	foundContactsChannel := make(chan []Contact)
 	foundValueChannel := make(chan string)
 	queryFailedChannel := make(chan error)
 
-	kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, foundValueChannel, queryFailedChannel)
+	kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, foundValueChannel, queryFailedChannel, lock)
 	timesFailed := 0
 
 Loop:
 	for i := 0; i < len(contactsToQuery); i++ {
 		select {
 		case foundContacts := <-foundContactsChannel:
-			mutex.Lock()
+			lock.mutex.Lock()
 
 			kClosest := kademlia.getKClosest(*closestToTargetList, foundContacts, targetId, NumberOfClosestNodesToRetrieved)
 			*closestToTargetList = kClosest
 
-			mutex.Unlock()
-			go kademlia.lookupRound(lookupType, targetId, lookupCompleteChannel, lookupDataChannel, stop, *closestToTargetList, queriedContacts, closestToTargetList)
+			go kademlia.lookupRound(lookupType, targetId, lookupCompleteChannel, lookupDataChannel, stop, *closestToTargetList, queriedContacts, closestToTargetList, lock)
+			lock.mutex.Unlock()
 		case foundValue := <-foundValueChannel:
 			*stop = true
 			lookupDataChannel <- foundValue
@@ -321,17 +300,19 @@ Loop:
 		}
 
 	}
-	mutex.Lock()
+	lock.mutex.Lock()
 	if (len(previousClosestToTargetList) != 0 && kademlia.firstSetContainsAllContactsOfSecondSet(*closestToTargetList, previousClosestToTargetList) && kademlia.firstSetContainsAllContactsOfSecondSet(previousClosestToTargetList, *closestToTargetList)) || timesFailed >= len(contactsToQuery) {
 		*stop = true
-		mutex.Unlock()
+		lock.mutex.Unlock()
 		lookupCompleteChannel <- true
 	} else {
-		mutex.Unlock()
+		lock.mutex.Unlock()
 	}
 }
 
 func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([]Contact, string, error) {
+
+	lock := &Lock{}
 	queriedContacts := new([]Contact)
 
 	var closestToTargetList *[]Contact
@@ -345,7 +326,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 	stopPointer := &stop
 	for {
 		*stopPointer = false
-		go kademlia.lookupRound(lookupType, targetId, lookupCompleteChannel, lookupDataChannel, stopPointer, []Contact{}, queriedContacts, closestToTargetList)
+		go kademlia.lookupRound(lookupType, targetId, lookupCompleteChannel, lookupDataChannel, stopPointer, []Contact{}, queriedContacts, closestToTargetList, lock)
 
 		select {
 		case <-lookupCompleteChannel:
@@ -355,7 +336,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 			return nil, foundValue, nil
 		}
 
-		contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList)
+		contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList, lock)
 
 		if len(contactsToQuery) <= 0 {
 			break
@@ -364,15 +345,15 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 		foundContactsChannel := make(chan []Contact)
 		queryFailedChannel := make(chan error)
 
-		kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, nil, queryFailedChannel)
+		kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, nil, queryFailedChannel, lock)
 		fmt.Println("New")
 
 		for i := 0; i < len(contactsToQuery); i++ {
 			select {
 			case foundContacts := <-foundContactsChannel:
-				mutex.Lock()
+				lock.mutex.Lock()
 				*closestToTargetList = kademlia.getKClosest(*closestToTargetList, foundContacts, targetId, NumberOfClosestNodesToRetrieved)
-				mutex.Unlock()
+				lock.mutex.Unlock()
 			case queryFailedError := <-queryFailedChannel:
 				logger.Log("Failed to find node in channel: " + queryFailedError.Error())
 				fmt.Println("Failed to find node in channel: " + queryFailedError.Error())
@@ -380,11 +361,10 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 			}
 
 		}
-		fmt.Println("Retry!")
 	}
-	mutex.Lock()
+	lock.mutex.Lock()
 	kClosest := *closestToTargetList
-	mutex.Unlock()
+	lock.mutex.Unlock()
 
 	return kClosest, "", nil
 

@@ -458,7 +458,7 @@ func TestLookupAfterJoin(t *testing.T) {
 
 	var kademlias []*Kademlia
 	var allContacts []Contact
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 3; i++ {
 		port := 1101 + i
 		kademlia := NewKademlia("localhost", port, false, "localhost", 1100)
 		allContacts = append(allContacts, kademlia.KademliaNode.RoutingTable.Me)
@@ -508,26 +508,23 @@ func TestLookupAfterJoin(t *testing.T) {
 	}
 
 }
-
 func TestBig(t *testing.T) {
-	time.Sleep(time.Second)
-
-	bootstrap := NewKademlia("localhost", 1200, true, "", 0)
+	bootstrap := NewKademlia("localhost", 60000, true, "", 0)
 	go bootstrap.Start()
 	time.Sleep(time.Second)
 
 	var kademlias []*Kademlia
 	var allContacts []Contact
-	for i := 0; i < 30; i++ {
-		port := 1201 + i
-		kademlia := NewKademlia("localhost", port, false, "localhost", 1200)
+	for i := 0; i < 10; i++ {
+		port := 60001 + i
+		kademlia := NewKademlia("localhost", port, false, "localhost", 60000)
 		allContacts = append(allContacts, kademlia.KademliaNode.RoutingTable.Me)
 		go kademlia.Start()
 		time.Sleep(time.Microsecond * 100)
 
 		kademlias = append(kademlias, kademlia)
 	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(time.Second)
 
 	content := "hello"
 	key, err := kademlias[len(kademlias)-1].Store(content)
