@@ -70,11 +70,11 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &findData)
 
-		logger.Log(findData.FromAddress + " wants to find a value.")
+		logger.Log(findData.From.Ip + " wants to find a value.")
 
 		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
 		if err != nil {
-			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.ID, NumberOfClosestNodesToRetrieved)
+			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.Key.GetKademliaIdRepresentationOfKey(), NumberOfClosestNodesToRetrieved)
 			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
 			if err != nil {
 				logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
@@ -99,7 +99,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		messageHandler.kademliaNode.DataStore.Insert(store.Key, store.Value)
 
-		logger.Log(store.FromAddress + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
+		logger.Log(store.From.Ip + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
 
 		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.Me)
 		bytes, err := json.Marshal(newStoreResponse)

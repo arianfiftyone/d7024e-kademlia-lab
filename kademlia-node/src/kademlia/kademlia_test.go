@@ -228,6 +228,73 @@ func TestLookupContact2(t *testing.T) {
 
 }
 
+func TestLookupContact3(t *testing.T) {
+
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 13000)
+
+	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 13001)
+	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 13002)
+	kademlia3 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 13003)
+	kademlia4 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 13004)
+	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 13005)
+	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 13006)
+	kademlia7 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000"), "127.0.0.1", 13007)
+	kademlia8 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFF000000000000000000000000"), "127.0.0.1", 13008)
+	kademlia9 := CreateMockedKademlia(NewKademliaID("0000000FFFFFFFFFFFFFFFF00000000000000000"), "127.0.0.1", 13009)
+
+	kademlias := []Kademlia{kademlia1, kademlia4, kademlia5, kademlia6, kademlia3, kademlia7, kademlia8, kademlia9, kademlia2}
+
+	go bootstrap.Start()
+	go kademlia1.Start()
+	go kademlia2.Start()
+	go kademlia3.Start()
+	go kademlia4.Start()
+	go kademlia5.Start()
+	go kademlia6.Start()
+	go kademlia7.Start()
+	go kademlia8.Start()
+	go kademlia9.Start()
+	time.Sleep(1 * time.Second)
+
+	for _, kademlia := range kademlias {
+		bootstrap.KademliaNode.RoutingTable.AddContact(kademlia.KademliaNode.RoutingTable.Me)
+		kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
+
+		fmt.Print("Me: ")
+		fmt.Println(kademlia.KademliaNode.RoutingTable.Me)
+		list, _ := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
+		// fmt.Print("closestToTargetList: ")
+		// fmt.Println(list)
+
+		for _, contat := range list {
+			kademlia.KademliaNode.RoutingTable.AddContact(contat)
+
+		}
+
+	}
+	fmt.Println()
+	fmt.Println("-------------------------------------")
+	fmt.Println()
+
+	kademlia := NewKademlia("127.0.0.1", 4000, false, "", 0)
+
+	kademlia.KademliaNode.RoutingTable.AddContact(bootstrap.KademliaNode.RoutingTable.Me)
+
+	for _, kademlia := range kademlias {
+		list, _ := kademlia.LookupContact(kademlia1.KademliaNode.RoutingTable.Me.ID)
+		doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.RoutingTable.Me, kademlia2.KademliaNode.RoutingTable.Me, kademlia3.KademliaNode.RoutingTable.Me})
+		assert.True(t, doesContainAll)
+
+		if !doesContainAll {
+			fmt.Print("Me: ")
+			fmt.Println(kademlia.KademliaNode.RoutingTable.Me)
+			fmt.Print("failed: ")
+			fmt.Println(list)
+		}
+	}
+
+}
+
 func TestLookupDataFindsData(t *testing.T) {
 
 	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10020)
@@ -380,6 +447,115 @@ func TestStore(t *testing.T) {
 				assert.Fail(t, "nodes not found by lookup, should not get a store rpc")
 			}
 		}
+	}
+
+}
+
+func TestLookupAfterJoin(t *testing.T) {
+	bootstrap := NewKademlia("localhost", 1100, true, "", 0)
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+
+	var kademlias []*Kademlia
+	var allContacts []Contact
+	for i := 0; i < 30; i++ {
+		port := 1101 + i
+		kademlia := NewKademlia("localhost", port, false, "localhost", 1100)
+		allContacts = append(allContacts, kademlia.KademliaNode.RoutingTable.Me)
+		go kademlia.Start()
+		time.Sleep(time.Microsecond * 50)
+
+		kademlias = append(kademlias, kademlia)
+	}
+	time.Sleep(time.Second)
+
+	target := allContacts[len(allContacts)-1].ID
+
+	allContacts = append(allContacts, bootstrap.KademliaNode.RoutingTable.Me)
+	var candidates ContactCandidates
+	for i, candidate := range allContacts {
+		candidate.CalcDistance(target)
+		allContacts[i] = candidate
+	}
+	candidates.Append(allContacts)
+
+	candidates.Sort()
+
+	count := NumberOfClosestNodesToRetrieved
+	if count > candidates.Len() {
+		count = candidates.Len()
+	}
+
+	expectedClosest := candidates.GetContacts(count)
+	fmt.Print("Expected: ")
+	fmt.Println(expectedClosest)
+
+	for _, kademlia := range kademlias {
+		contacts, err := kademlia.LookupContact(target)
+
+		if err != nil {
+			assert.Fail(t, err.Error())
+		}
+
+		containsAll := bootstrap.firstSetContainsAllContactsOfSecondSet(contacts, expectedClosest)
+		assert.True(t, containsAll)
+
+		if !containsAll {
+			fmt.Print("Failed: ")
+			fmt.Println(contacts)
+		}
+
+	}
+
+}
+
+func TestBig(t *testing.T) {
+	time.Sleep(time.Second)
+
+	bootstrap := NewKademlia("localhost", 1200, true, "", 0)
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+
+	var kademlias []*Kademlia
+	var allContacts []Contact
+	for i := 0; i < 30; i++ {
+		port := 1201 + i
+		kademlia := NewKademlia("localhost", port, false, "localhost", 1200)
+		allContacts = append(allContacts, kademlia.KademliaNode.RoutingTable.Me)
+		go kademlia.Start()
+		time.Sleep(time.Microsecond * 100)
+
+		kademlias = append(kademlias, kademlia)
+	}
+	time.Sleep(2 * time.Second)
+
+	content := "hello"
+	key, err := kademlias[len(kademlias)-1].Store(content)
+
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	for _, kademlia := range kademlias {
+		contacts, retrivedContent, err := kademlia.LookupData(key)
+
+		if contacts != nil {
+			closestToTargetList, _ := kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
+
+			fmt.Print("Me: ")
+			fmt.Println(kademlia.KademliaNode.RoutingTable.Me)
+			fmt.Print("contacts: ")
+			fmt.Println(contacts)
+			fmt.Print("closestToTargetList: ")
+			fmt.Println(closestToTargetList)
+		}
+
+		if err != nil {
+			assert.Fail(t, err.Error())
+		}
+
+		assert.Equal(t, content, retrivedContent)
+
 	}
 
 }
