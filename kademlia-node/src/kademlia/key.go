@@ -22,9 +22,12 @@ func HashToKey(value string) *Key {
 	}
 }
 
+func (key *Key) GetHashString() string {
+	return hex.EncodeToString(key.Hash[:])
+}
+
 func (key *Key) GetKademliaIdRepresentationOfKey() *KademliaID {
-	hashInHex := hex.EncodeToString(key.Hash[:])
-	return NewKademliaID(hashInHex)
+	return NewKademliaID(key.GetHashString())
 }
 
 func GetKeyRepresentationOfKademliaId(id *KademliaID) *Key {
