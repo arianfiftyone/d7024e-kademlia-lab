@@ -16,7 +16,7 @@ type Network interface {
 	SendPingMessage(from *Contact, contact *Contact) error
 	SendFindContactMessage(from *Contact, contact *Contact, id *KademliaID) ([]Contact, error)
 	SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error)
-	SendStoreMessage(from *Contact, contact *Contact, value string) bool
+	SendStoreMessage(from *Contact, contact *Contact, key *Key, value string) bool
 }
 
 type NetworkImplementation struct {
@@ -171,7 +171,7 @@ func (network *NetworkImplementation) SendFindContactMessage(from *Contact, cont
 }
 
 func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error) {
-	findData := NewFindDataMessage(*from, network.Ip, contact.ID, key)
+	findData := NewFindDataMessage(*from, key)
 	bytes, err := json.Marshal(findData)
 	if err != nil {
 		return nil, "", err
@@ -206,9 +206,8 @@ func (network *NetworkImplementation) SendFindDataMessage(from *Contact, contact
 
 }
 
-func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *Contact, value string) bool {
-	key := HashToKey(value)
-	store := NewStoreMessage(*from, network.Ip, key, contact.ID, value)
+func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *Contact, key *Key, value string) bool {
+	store := NewStoreMessage(*from, key, value)
 	bytes, err := json.Marshal(store)
 	if err != nil {
 		logger.Log("Error when marshaling `store` message: " + err.Error())

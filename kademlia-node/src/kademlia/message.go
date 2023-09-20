@@ -89,33 +89,27 @@ func NewFindNodeMessage(from Contact, id *KademliaID) FindNode {
 
 type FindData struct {
 	Message
-	FromAddress string `json:"fromAddress"`
-	ID          *KademliaID
-	Key         *Key
+	Key *Key
 }
 
-func NewFindDataMessage(from Contact, fromAddress string, id *KademliaID, key *Key) FindData {
+func NewFindDataMessage(from Contact, key *Key) FindData {
 	message := Message{
 		MessageType: FIND_DATA,
 		From:        from,
 	}
 	return FindData{
 		message,
-		fromAddress,
-		id,
 		key,
 	}
 }
 
 type Store struct {
 	Message
-	FromAddress string `json:"fromAddress"`
-	Key         *Key
-	ID          *KademliaID
-	Value       string
+	Key   *Key
+	Value string
 }
 
-func NewStoreMessage(from Contact, fromAddress string, key *Key, id *KademliaID, value string) Store {
+func NewStoreMessage(from Contact, key *Key, value string) Store {
 	message := Message{
 		MessageType: STORE,
 		From:        from,
@@ -123,9 +117,7 @@ func NewStoreMessage(from Contact, fromAddress string, key *Key, id *KademliaID,
 
 	return Store{
 		message,
-		fromAddress,
 		key,
-		id,
 		value,
 	}
 }

@@ -42,7 +42,7 @@ func (network *NetworkMock) SendFindContactMessage(from *Contact, contact *Conta
 func (network *NetworkMock) SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error) {
 	return nil, "", nil
 }
-func (network *NetworkMock) SendStoreMessage(from *Contact, contact *Contact, value string) bool {
+func (network *NetworkMock) SendStoreMessage(from *Contact, contact *Contact, key *Key, value string) bool {
 	return false
 }
 
