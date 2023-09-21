@@ -297,7 +297,7 @@ func TestLookupContact3(t *testing.T) {
 
 func TestLookupDataFindsData(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10020)
+	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10069)
 
 	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10021)
 	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10022)

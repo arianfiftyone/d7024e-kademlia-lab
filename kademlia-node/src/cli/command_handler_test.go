@@ -3,11 +3,12 @@ package cli
 import (
 	"bytes"
 	"io"
+	"log"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/arianfiftyone/src/kademlia"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,6 +92,18 @@ func TestAbbreviatedKillCommand(t *testing.T) {
 	assert.Equal(t, 1, cli.exitCli("k"))
 }
 
+func TestClearCommand(t *testing.T) {
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, "", cli.testCommand("clear"))
+}
+
+func TestAbbreviatedClearCommand(t *testing.T) {
+	kademliaInstance := createTestKademlia()
+	cli := NewCli(kademliaInstance)
+	assert.Equal(t, "", cli.testCommand("c"))
+}
+
 // `exitCLI` purpose is for testing cases(`kill`) where the function exits with `os.Exit()`
 // and is slightly modified from the source:
 // https://stackoverflow.com/questions/40615641/testing-os-exit-scenarios-in-go-with-coverage-information-c overalls-io-goverall/40801733#40801733
@@ -113,4 +126,26 @@ func (cli *Cli) exitCli(e string) int {
 	return got
 }
 
-// TODO: Add testcase for `clear`-command
+// Not sure if tested correctly
+func TestClear(t *testing.T) {
+	// Backup the original os.Stdout and restore it at the end of the test.
+	originalStdout := os.Stdout
+	defer func() {
+		os.Stdout = originalStdout
+	}()
+
+	// Create a capturing buffer to capture the output.
+	capturingBuffer := &bytes.Buffer{}
+	log.SetOutput(capturingBuffer)
+
+	cli := &Cli{}
+
+	cli.Clear()
+
+	// Define the expected clear command sequence for your system.
+	expectedClear := ""
+
+	// Verify that the captured output contains the expected clear command sequence.
+	output := capturingBuffer.String()
+	assert.Equal(t, output, expectedClear)
+}
