@@ -28,10 +28,10 @@ const (
 )
 
 type Cli struct {
-	kademlia *kademlia.Kademlia
+	kademlia kademlia.Kademlia
 }
 
-func NewCli(kademlia *kademlia.Kademlia) *Cli {
+func NewCli(kademlia kademlia.Kademlia) *Cli {
 	return &Cli{
 		kademlia: kademlia,
 	}

@@ -24,7 +24,7 @@ var (
 // `output` is the io.Writer used for data output.
 // `kademlia` represents the Kademlia node associated with this CLI
 // `commands` is a slice of program commands.
-func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kademlia, commands []string) {
+func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kademlia, commands []string) {
 
 	numArgs := len(commands)
 	command := strings.ToLower(commands[0])
@@ -33,17 +33,31 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kade
 
 	case "put", "p":
 		if numArgs == 2 {
-			Put(*kademliaInstance, commands[1])
+			key, err := Put(kademliaInstance, commands[1])
+			if err != nil {
+				fmt.Fprintln(output, err)
+			} else {
+				fmt.Fprintln(output, "Got hash: "+key)
+
+			}
+
 		} else {
 			fmt.Fprintln(output, noArgsError)
 		}
 
 	case "get", "g":
 		if numArgs == 2 {
-			Get(*kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademlia.NewKademliaID(commands[1])))
+			content, err := Get(kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademlia.NewKademliaID(commands[1])))
+			if err != nil {
+				fmt.Fprintln(output, err)
+			} else {
+				fmt.Fprintln(output, "Got content: "+content)
+
+			}
 		} else {
 			fmt.Fprintln(output, noArgsError)
 		}
+
 	case "kill", "k":
 		if numArgs == 1 {
 			Kill()
@@ -53,8 +67,11 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kade
 
 	case "kademliaid", "kid":
 		if numArgs == 1 {
-			hexRepresentation := *kademliaInstance.KademliaNode.RoutingTable.Me.ID
+
+			kademliaNode := *kademliaInstance.GetKademliaNode()
+			hexRepresentation := kademliaNode.GetRoutingTable().Me.ID
 			hexStringRepresentation := hexRepresentation.String()
+
 			fmt.Fprintln(output, hexStringRepresentation)
 		} else {
 			fmt.Fprintln(output, noArgsError)
@@ -80,29 +97,31 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kade
 
 }
 
-func Put(kademlia kademlia.Kademlia, content string) {
+func Put(kademlia kademlia.Kademlia, content string) (string, error) {
 	key, err := kademlia.Store(content)
 
 	if err != nil {
 		log.Printf("Error when storing content: %v\n", err)
+		return "", err
 	} else {
-		fmt.Printf("Got hash: %s\n", key.GetHashString())
+		return key.GetHashString(), nil
 	}
 
 }
 
-func Get(kademlia kademlia.Kademlia, key *kademlia.Key) {
+func Get(kademlia kademlia.Kademlia, key *kademlia.Key) (string, error) {
 	_, value, err := kademlia.LookupData(key)
 
 	if err != nil {
 		log.Printf("Error when looking up data %v\n", err)
-		return
+		return "", err
 	}
 
 	if value != "" {
-		fmt.Printf("Got content: %s\n", value)
-		return
+		return value, nil
 	}
+
+	return "", nil
 }
 
 func Kill() {

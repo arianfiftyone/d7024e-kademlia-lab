@@ -4,13 +4,20 @@ const (
 	NumberOfClosestNodesToRetrieved = 3 // Must be atleast 3, otherwize some tests will fail
 )
 
-type KademliaNode struct {
+type KademliaNode interface {
+	setNetwork(network Network)
+	GetRoutingTable() *RoutingTable
+	GetDataStore() *DataStore
+	updateRoutingTable(contact Contact)
+}
+
+type KademliaNodeImplementation struct {
 	Network      Network
 	RoutingTable *RoutingTable
 	DataStore    *DataStore
 }
 
-func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNode {
+func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNodeImplementation {
 	var routingTable *RoutingTable
 	var kademliaID KademliaID
 
@@ -29,17 +36,25 @@ func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNode {
 	// Create new DataStore instance
 	dataStore := NewDataStore()
 
-	return &KademliaNode{
+	return &KademliaNodeImplementation{
 		RoutingTable: routingTable,
 		DataStore:    &dataStore,
 	}
 }
 
-func (kademliaNode *KademliaNode) setNetwork(network Network) {
+func (kademliaNode *KademliaNodeImplementation) setNetwork(network Network) {
 	kademliaNode.Network = network
 }
 
-func (kademliaNode *KademliaNode) updateRoutingTable(contact Contact) {
+func (kademliaNode *KademliaNodeImplementation) GetRoutingTable() *RoutingTable {
+	return kademliaNode.RoutingTable
+}
+
+func (kademliaNode *KademliaNodeImplementation) GetDataStore() *DataStore {
+	return kademliaNode.DataStore
+}
+
+func (kademliaNode *KademliaNodeImplementation) updateRoutingTable(contact Contact) {
 	if kademliaNode.Network == nil {
 		return
 	}

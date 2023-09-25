@@ -12,7 +12,7 @@ type MessageHandler interface {
 }
 
 type MessageHandlerImplementation struct {
-	kademliaNode *KademliaNode
+	kademliaNode KademliaNode
 }
 
 func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []byte) ([]byte, error) {
@@ -40,7 +40,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		logger.Log(ping.From.Ip + " sent you a ping")
 
-		pong := NewPongMessage(messageHandler.kademliaNode.RoutingTable.Me)
+		pong := NewPongMessage(messageHandler.kademliaNode.GetRoutingTable().Me)
 		bytes, err := json.Marshal(pong)
 		if err != nil {
 			logger.Log("Error when unmarshaling `pong` message: " + err.Error())
@@ -55,9 +55,9 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		json.Unmarshal(rawMessage, &findN)
 
 		logger.Log(findN.From.Ip + " wants to find your k closest nodes.")
-		closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
+		closestKNodesList := messageHandler.kademliaNode.GetRoutingTable().FindClosestContacts(findN.ID, NumberOfClosestNodesToRetrieved)
 
-		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList))
+		bytes, err := json.Marshal(NewFoundContactsMessage(messageHandler.kademliaNode.GetRoutingTable().Me, closestKNodesList))
 		if err != nil {
 			logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 			return nil, err
@@ -72,10 +72,10 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		logger.Log(findData.From.Ip + " wants to find a value.")
 
-		data, err := messageHandler.kademliaNode.DataStore.Get(findData.Key)
+		data, err := messageHandler.kademliaNode.GetDataStore().Get(findData.Key)
 		if err != nil {
-			closestKNodesList := messageHandler.kademliaNode.RoutingTable.FindClosestContacts(findData.Key.GetKademliaIdRepresentationOfKey(), NumberOfClosestNodesToRetrieved)
-			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, closestKNodesList, ""))
+			closestKNodesList := messageHandler.kademliaNode.GetRoutingTable().FindClosestContacts(findData.Key.GetKademliaIdRepresentationOfKey(), NumberOfClosestNodesToRetrieved)
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.GetRoutingTable().Me, closestKNodesList, ""))
 			if err != nil {
 				logger.Log("Error when marshaling `closetsKNodesList`: " + err.Error())
 				return nil, err
@@ -83,7 +83,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 			return bytes, nil
 
 		} else {
-			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.RoutingTable.Me, nil, data))
+			bytes, err := json.Marshal(NewFoundDataMessage(messageHandler.kademliaNode.GetRoutingTable().Me, nil, data))
 			if err != nil {
 				logger.Log("Error when marshaling `data`: " + err.Error())
 				return nil, err
@@ -97,11 +97,11 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		json.Unmarshal(rawMessage, &store)
 
-		messageHandler.kademliaNode.DataStore.Insert(store.Key, store.Value)
+		messageHandler.kademliaNode.GetDataStore().Insert(store.Key, store.Value)
 
 		logger.Log(store.From.Ip + " wants to to store an object at the K(=" + strconv.Itoa(NumberOfClosestNodesToRetrieved) + ") nodes nearest to the hash of the data object in question")
 
-		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.RoutingTable.Me)
+		newStoreResponse := NewStoreResponseMessage(messageHandler.kademliaNode.GetRoutingTable().Me)
 		bytes, err := json.Marshal(newStoreResponse)
 		if err != nil {
 			logger.Log("Error when marshaling `newStoreResponse`: " + err.Error())
@@ -111,7 +111,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 		return bytes, nil
 
 	default:
-		errorMessage := NewErrorMessage(messageHandler.kademliaNode.RoutingTable.Me)
+		errorMessage := NewErrorMessage(messageHandler.kademliaNode.GetRoutingTable().Me)
 		bytes, err := json.Marshal(errorMessage)
 		if err != nil {
 			logger.Log("Error when marshaling `errorMessage`: " + err.Error())
