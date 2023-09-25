@@ -11,7 +11,7 @@ import (
 
 type Kademlia struct {
 	Network          Network
-	KademliaNode     *KademliaNode
+	KademliaNode     KademliaNode
 	isBootstrap      bool
 	bootstrapContact *Contact
 }
@@ -83,7 +83,7 @@ func (kademlia *Kademlia) refresh() {
 	var lowerBound *KademliaID
 	var highBound *KademliaID
 
-	if kademlia.KademliaNode.RoutingTable.Me.ID.Less(kademlia.bootstrapContact.ID) {
+	if kademlia.KademliaNode.GetRoutingTable().Me.ID.Less(kademlia.bootstrapContact.ID) {
 		lowerBound = kademlia.bootstrapContact.ID
 		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 	} else {
@@ -100,7 +100,7 @@ func (kademlia *Kademlia) refresh() {
 		return
 	}
 	for _, contact := range contacts {
-		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+		kademlia.KademliaNode.GetRoutingTable().AddContact(contact)
 	}
 
 }
@@ -113,19 +113,19 @@ func (kademlia *Kademlia) Join() {
 
 	}
 
-	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.RoutingTable.Me, kademlia.bootstrapContact)
+	err := kademlia.Network.SendPingMessage(&kademlia.KademliaNode.GetRoutingTable().Me, kademlia.bootstrapContact)
 	if err != nil {
 		return
 	}
 
-	kademlia.KademliaNode.RoutingTable.AddContact(*kademlia.bootstrapContact)
+	kademlia.KademliaNode.GetRoutingTable().AddContact(*kademlia.bootstrapContact)
 
-	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.RoutingTable.Me.ID)
+	contacts, err := kademlia.LookupContact(kademlia.KademliaNode.GetRoutingTable().Me.ID)
 	if err != nil {
 		return
 	}
 	for _, contact := range contacts {
-		kademlia.KademliaNode.RoutingTable.AddContact(contact)
+		kademlia.KademliaNode.GetRoutingTable().AddContact(contact)
 	}
 
 	kademlia.refresh()
@@ -145,7 +145,7 @@ func (kademlia *Kademlia) Store(content string) (*Key, error) {
 		return nil, errors.New("found no node to store the value in")
 	}
 	for _, contact := range contacts {
-		kademlia.Network.SendStoreMessage(&kademlia.KademliaNode.RoutingTable.Me, &contact, key, content)
+		kademlia.Network.SendStoreMessage(&kademlia.KademliaNode.GetRoutingTable().Me, &contact, key, content)
 	}
 	return key, nil
 }
@@ -161,10 +161,10 @@ func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQu
 			switch lookupType {
 
 			case LOOKUP_CONTACT:
-				foundContacts, err = kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, &targetId)
+				foundContacts, err = kademlia.Network.SendFindContactMessage(&kademlia.KademliaNode.GetRoutingTable().Me, &contactToQuery, &targetId)
 
 			case LOOKUP_DATA:
-				foundContacts, foundValue, err = kademlia.Network.SendFindDataMessage(&kademlia.KademliaNode.RoutingTable.Me, &contactToQuery, GetKeyRepresentationOfKademliaId(&targetId))
+				foundContacts, foundValue, err = kademlia.Network.SendFindDataMessage(&kademlia.KademliaNode.GetRoutingTable().Me, &contactToQuery, GetKeyRepresentationOfKademliaId(&targetId))
 
 			}
 
@@ -316,7 +316,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 	queriedContacts := new([]Contact)
 
 	var closestToTargetList *[]Contact
-	alphaClosest := kademlia.KademliaNode.RoutingTable.FindClosestContacts(targetId, NumberOfAlphaContacts)
+	alphaClosest := kademlia.KademliaNode.GetRoutingTable().FindClosestContacts(targetId, NumberOfAlphaContacts)
 	closestToTargetList = &alphaClosest
 
 	lookupCompleteChannel := make(chan bool)

@@ -53,7 +53,7 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance *kademlia.Kade
 
 	case "kademliaid", "kid":
 		if numArgs == 1 {
-			hexRepresentation := *kademliaInstance.KademliaNode.RoutingTable.Me.ID
+			hexRepresentation := *kademliaInstance.KademliaNode.GetRoutingTable().Me.ID
 			hexStringRepresentation := hexRepresentation.String()
 			fmt.Fprintln(output, hexStringRepresentation)
 		} else {

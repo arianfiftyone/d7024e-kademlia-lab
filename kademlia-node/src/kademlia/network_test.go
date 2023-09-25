@@ -176,10 +176,10 @@ func TestSendNodeDataMessage(t *testing.T) {
 	value := "data"
 	key := HashToKey(value)
 
-	bootstrap.KademliaNode.DataStore.Insert(key, value)
+	bootstrap.KademliaNode.GetDataStore().Insert(key, value)
 	go bootstrap.Start()
 	time.Sleep(time.Second)
-	_, str, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.RoutingTable.Me, &bootstrap.KademliaNode.RoutingTable.Me, key)
+	_, str, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.GetRoutingTable().Me, &bootstrap.KademliaNode.GetRoutingTable().Me, key)
 
 	assert.Equal(t, str, value)
 }
@@ -191,16 +191,16 @@ func TestSendNodeDataMessageNoData(t *testing.T) {
 	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7011)
 	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7012)
 
-	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia1.KademliaNode.RoutingTable.Me)
-	bootstrap.KademliaNode.RoutingTable.AddContact(kademlia2.KademliaNode.RoutingTable.Me)
+	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
+	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
 
 	go bootstrap.Start()
 	time.Sleep(time.Second)
 	value := "data"
 	key := HashToKey(value)
-	contacts, _, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.RoutingTable.Me, &bootstrap.KademliaNode.RoutingTable.Me, key)
+	contacts, _, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.GetRoutingTable().Me, &bootstrap.KademliaNode.GetRoutingTable().Me, key)
 
-	kClosest := bootstrap.KademliaNode.RoutingTable.FindClosestContacts(bootstrap.KademliaNode.RoutingTable.Me.ID, NumberOfClosestNodesToRetrieved)
+	kClosest := bootstrap.KademliaNode.GetRoutingTable().FindClosestContacts(bootstrap.KademliaNode.GetRoutingTable().Me.ID, NumberOfClosestNodesToRetrieved)
 	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(kClosest, contacts)
 	assert.True(t, doesContainAll)
 }
