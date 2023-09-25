@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -35,7 +34,8 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kadem
 		if numArgs == 2 {
 			key, err := Put(kademliaInstance, commands[1])
 			if err != nil {
-				fmt.Fprintln(output, err)
+				customErr := fmt.Errorf("error when storing content: %s", err.Error())
+				fmt.Fprintln(output, customErr)
 			} else {
 				fmt.Fprintln(output, "Got hash: "+key)
 
@@ -49,7 +49,8 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kadem
 		if numArgs == 2 {
 			content, err := Get(kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademlia.NewKademliaID(commands[1])))
 			if err != nil {
-				fmt.Fprintln(output, err)
+				customErr := fmt.Errorf("error when looking up data %s", err.Error())
+				fmt.Fprintln(output, customErr)
 			} else {
 				fmt.Fprintln(output, "Got content: "+content)
 
@@ -101,7 +102,6 @@ func Put(kademlia kademlia.Kademlia, content string) (string, error) {
 	key, err := kademlia.Store(content)
 
 	if err != nil {
-		log.Printf("Error when storing content: %v\n", err)
 		return "", err
 	} else {
 		return key.GetHashString(), nil
@@ -113,7 +113,6 @@ func Get(kademlia kademlia.Kademlia, key *kademlia.Key) (string, error) {
 	_, value, err := kademlia.LookupData(key)
 
 	if err != nil {
-		log.Printf("Error when looking up data %v\n", err)
 		return "", err
 	}
 
