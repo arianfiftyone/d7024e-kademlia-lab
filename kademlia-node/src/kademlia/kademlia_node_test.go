@@ -13,7 +13,9 @@ func TestUpdateRoutingTableEmptyTable(t *testing.T) {
 
 	kademliaNode.setNetwork(&NetworkImplementation{})
 
-	contact := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "198.168.1.1", 5000)
+	kademliaID := GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000")
+
+	contact := NewContact(kademliaID, "198.168.1.1", 5000)
 
 	fmt.Println("Updating an empty routing table with: " + contact.String())
 
@@ -50,7 +52,9 @@ func TestUpdateRoutingTableFullTable(t *testing.T) {
 	kademliaNode := NewKademliaNode("127.0.0.1", 3002, false)
 	kademliaNode.setNetwork(&NetworkMock{})
 
-	contact := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "198.168.1.1", 5000)
+	kademliaID := GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000")
+
+	contact := NewContact(kademliaID, "198.168.1.1", 5000)
 
 	bucket := kademliaNode.RoutingTable.buckets[kademliaNode.RoutingTable.getBucketIndex(contact.ID)]
 

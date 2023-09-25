@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"math/rand"
+
+	"github.com/arianfiftyone/src/logger"
 )
 
 // the static number of bytes in a KademliaID
@@ -12,16 +14,28 @@ const IDLength = 20
 // type definition of a KademliaID
 type KademliaID [IDLength]byte
 
+func GenerateNewKademliaID(data string) *KademliaID {
+	newKademliaID, err := NewKademliaID(data)
+	if err != nil {
+		logger.Log("cannot create KademliaID from given string")
+	}
+	return newKademliaID
+}
+
 // NewKademliaID returns a new instance of a KademliaID based on the string input
-func NewKademliaID(data string) *KademliaID {
+func NewKademliaID(data string) (*KademliaID, error) {
 	decoded, _ := hex.DecodeString(data)
+
+	if len(decoded) != IDLength {
+		return nil, errors.New("cannot create KademliaID from given string")
+	}
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = decoded[i]
 	}
 
-	return &newKademliaID
+	return &newKademliaID, nil
 }
 
 // NewRandomKademliaID returns a new instance of a random KademliaID,

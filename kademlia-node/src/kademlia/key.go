@@ -27,7 +27,7 @@ func (key *Key) GetHashString() string {
 }
 
 func (key *Key) GetKademliaIdRepresentationOfKey() *KademliaID {
-	return NewKademliaID(key.GetHashString())
+	return GenerateNewKademliaID(key.GetHashString())
 }
 
 func GetKeyRepresentationOfKademliaId(id *KademliaID) *Key {

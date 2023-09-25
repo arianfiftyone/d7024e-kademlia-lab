@@ -56,9 +56,9 @@ func CreateMockedJoinKademlia(kademliaID *KademliaID, ip string, port int, boots
 func TestJoinWithMultipleNodes(t *testing.T) {
 	kademliaBootsrap := NewKademlia("127.0.0.1", 2002, true, "", 0)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
-	kademlia3 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "127.0.0.1", 7003)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
+	kademlia3 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "127.0.0.1", 7003)
 
 	kademliaBootsrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
 	kademliaBootsrap.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
@@ -68,7 +68,7 @@ func TestJoinWithMultipleNodes(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	kademlia := CreateMockedJoinKademlia(NewKademliaID("0000000000000000000000000000000000000000"), "127.0.0.1", 2001, &kademliaBootsrap.KademliaNode.GetRoutingTable().Me)
+	kademlia := CreateMockedJoinKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000000"), "127.0.0.1", 2001, &kademliaBootsrap.KademliaNode.GetRoutingTable().Me)
 
 	kademlia.Join()
 
@@ -85,15 +85,15 @@ func TestLookupContact(t *testing.T) {
 
 	bootstrap := NewKademlia("127.0.0.1", 6000, true, "", 0)
 
-	contact1 := NewContact(NewKademliaID("0000000000000000000000000000000000000001"), "198.168.1.1", 3000)
-	contact2 := NewContact(NewKademliaID("0000000000000000000000000000000000000002"), "198.168.1.2", 3000)
-	contact3 := NewContact(NewKademliaID("000000000000000000000000000000000000000F"), "198.168.1.3", 3000)
-	contact4 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "198.168.1.4", 3000)
-	contact5 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "198.168.1.5", 3000)
-	contact6 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "198.168.1.6", 3000)
-	contact7 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000004"), "198.168.1.7", 3000)
-	contact8 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000005"), "198.168.1.8", 3000)
-	contact9 := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000006"), "198.168.1.9", 3000)
+	contact1 := NewContact(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "198.168.1.1", 3000)
+	contact2 := NewContact(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "198.168.1.2", 3000)
+	contact3 := NewContact(GenerateNewKademliaID("000000000000000000000000000000000000000F"), "198.168.1.3", 3000)
+	contact4 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000001"), "198.168.1.4", 3000)
+	contact5 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000002"), "198.168.1.5", 3000)
+	contact6 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000003"), "198.168.1.6", 3000)
+	contact7 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000004"), "198.168.1.7", 3000)
+	contact8 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000005"), "198.168.1.8", 3000)
+	contact9 := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000006"), "198.168.1.9", 3000)
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(contact1)
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(contact3)
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(contact4)
@@ -148,14 +148,14 @@ func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) KademliaI
 }
 func TestLookupContact2(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7000)
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7000)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
-	kademlia3 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 7003)
-	kademlia4 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 7004)
-	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 7005)
-	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 7006)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 7001)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 7002)
+	kademlia3 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 7003)
+	kademlia4 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 7004)
+	kademlia5 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 7005)
+	kademlia6 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 7006)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia6.KademliaNode.GetRoutingTable().Me)
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia5.KademliaNode.GetRoutingTable().Me)
@@ -209,17 +209,17 @@ func TestLookupContact2(t *testing.T) {
 
 func TestLookupContact3(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 13000)
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 13000)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 13001)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 13002)
-	kademlia3 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 13003)
-	kademlia4 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 13004)
-	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 13005)
-	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 13006)
-	kademlia7 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000"), "127.0.0.1", 13007)
-	kademlia8 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFF000000000000000000000000"), "127.0.0.1", 13008)
-	kademlia9 := CreateMockedKademlia(NewKademliaID("0000000FFFFFFFFFFFFFFFF00000000000000000"), "127.0.0.1", 13009)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 13001)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 13002)
+	kademlia3 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 13003)
+	kademlia4 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 13004)
+	kademlia5 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 13005)
+	kademlia6 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 13006)
+	kademlia7 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000"), "127.0.0.1", 13007)
+	kademlia8 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFFFFFFFFFF000000000000000000000000"), "127.0.0.1", 13008)
+	kademlia9 := CreateMockedKademlia(GenerateNewKademliaID("0000000FFFFFFFFFFFFFFFF00000000000000000"), "127.0.0.1", 13009)
 
 	kademlias := []KademliaImplementation{kademlia1, kademlia4, kademlia5, kademlia6, kademlia3, kademlia7, kademlia8, kademlia9, kademlia2}
 
@@ -276,16 +276,16 @@ func TestLookupContact3(t *testing.T) {
 
 func TestLookupDataFindsData(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10069)
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10069)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10021)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10022)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10021)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10022)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
 	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
 
 	value := "value"
-	key := GetKeyRepresentationOfKademliaId(NewKademliaID("0000000000000000000000000000000000000002")) // Sets the key to be the same as kademlia2's id
+	key := GetKeyRepresentationOfKademliaId(GenerateNewKademliaID("0000000000000000000000000000000000000002")) // Sets the key to be the same as kademlia2's id
 
 	kademlia2.KademliaNode.GetDataStore().Insert(key, value)
 
@@ -306,10 +306,10 @@ func TestLookupDataFindsData(t *testing.T) {
 
 func TestLookupDataFindsNoData(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10030)
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10030)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10031)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10032)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10031)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10032)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
 	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
@@ -332,15 +332,16 @@ func TestLookupDataFindsNoData(t *testing.T) {
 	doesContainAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, bootstrap.KademliaNode.GetRoutingTable().Me, kademlia.KademliaNode.GetRoutingTable().Me})
 	assert.True(t, doesContainAll)
 }
-func TestStore(t *testing.T) {
-	bootstrap := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 11000)
 
-	kademlia1 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 11001)
-	kademlia2 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 11002)
-	kademlia3 := CreateMockedKademlia(NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 11003)
-	kademlia4 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 11004)
-	kademlia5 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 11005)
-	kademlia6 := CreateMockedKademlia(NewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 11006)
+func TestStore(t *testing.T) {
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 11000)
+
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 11001)
+	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 11002)
+	kademlia3 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 11003)
+	kademlia4 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000001"), "127.0.0.1", 11004)
+	kademlia5 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000002"), "127.0.0.1", 11005)
+	kademlia6 := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000003"), "127.0.0.1", 11006)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia6.KademliaNode.GetRoutingTable().Me)
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia5.KademliaNode.GetRoutingTable().Me)

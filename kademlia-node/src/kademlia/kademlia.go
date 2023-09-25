@@ -54,9 +54,11 @@ func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, boot
 	kademliaNode.setNetwork(network)
 
 	var contact Contact
+	kademliaID := GenerateNewKademliaID(BootstrapKademliaID)
+
 	if !isBootstrap {
 		contact = NewContact(
-			NewKademliaID(BootstrapKademliaID),
+			kademliaID,
 			bootstrapIp,
 			bootstrapPort,
 		)
@@ -93,9 +95,9 @@ func (kademlia *KademliaImplementation) refresh() {
 
 	if kademlia.KademliaNode.GetRoutingTable().Me.ID.Less(kademlia.bootstrapContact.ID) {
 		lowerBound = kademlia.bootstrapContact.ID
-		highBound = NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+		highBound = GenerateNewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 	} else {
-		lowerBound = NewKademliaID("0000000000000000000000000000000000000000")
+		lowerBound = GenerateNewKademliaID("0000000000000000000000000000000000000000")
 		highBound = kademlia.bootstrapContact.ID
 	}
 
@@ -358,7 +360,6 @@ func (kademlia *KademliaImplementation) lookup(lookupType LookupType, targetId *
 		queryFailedChannel := make(chan error)
 
 		kademlia.queryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, nil, queryFailedChannel, lock)
-		fmt.Println("New")
 
 		for i := 0; i < len(contactsToQuery); i++ {
 			select {

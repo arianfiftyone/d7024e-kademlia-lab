@@ -8,8 +8,10 @@ import (
 )
 
 func TestNewRandomKademliaidInRange(t *testing.T) {
-	lowerBound := NewKademliaID("000000000000000000000000000000000000001E")
-	highBound := NewKademliaID("0000000000000000000000000000000000000020")
+
+	highBound := GenerateNewKademliaID("0000000000000000000000000000000000000020")
+	lowerBound := GenerateNewKademliaID("000000000000000000000000000000000000001E")
+
 	kademliaId, err := NewRandomKademliaIDInRange(lowerBound, highBound)
 	fmt.Println(kademliaId)
 

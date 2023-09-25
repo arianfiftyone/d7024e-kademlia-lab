@@ -1,5 +1,7 @@
 package kademlia
 
+import "github.com/arianfiftyone/src/logger"
+
 const (
 	NumberOfClosestNodesToRetrieved = 3 // Must be atleast 3, otherwize some tests will fail
 )
@@ -22,7 +24,13 @@ func NewKademliaNode(ip string, port int, isBootstrap bool) *KademliaNodeImpleme
 	var kademliaID KademliaID
 
 	if isBootstrap {
-		kademliaID = *NewKademliaID(BootstrapKademliaID)
+
+		kademliaIDPointer, err := NewKademliaID(BootstrapKademliaID)
+
+		if err != nil {
+			logger.Log("cannot create KademliaID from given string")
+		}
+		kademliaID = *kademliaIDPointer
 	} else {
 		kademliaID = *NewRandomKademliaID()
 	}

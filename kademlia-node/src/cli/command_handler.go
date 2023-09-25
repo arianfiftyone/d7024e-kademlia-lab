@@ -47,7 +47,14 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kadem
 
 	case "get", "g":
 		if numArgs == 2 {
-			content, err := Get(kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademlia.NewKademliaID(commands[1])))
+			kademliaId, err := kademlia.NewKademliaID(commands[1])
+			if err != nil {
+				customErr := fmt.Errorf("error when looking up data %s", err.Error())
+				fmt.Fprintln(output, customErr)
+				return
+			}
+
+			content, err := Get(kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademliaId))
 			if err != nil {
 				customErr := fmt.Errorf("error when looking up data %s", err.Error())
 				fmt.Fprintln(output, customErr)
