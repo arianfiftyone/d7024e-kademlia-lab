@@ -27,7 +27,7 @@ func TestJoinWithBootstrapOnly(t *testing.T) {
 
 }
 
-func CreateMockedJoinKademlia(kademliaID *KademliaID, ip string, port int, bootstrapContact *Contact) Kademlia {
+func CreateMockedJoinKademlia(kademliaID *KademliaID, ip string, port int, bootstrapContact *Contact) KademliaImplementation {
 	routingTable := NewRoutingTable(NewContact(kademliaID, ip, port))
 	dataStore := NewDataStore()
 	kademliaNode := &KademliaNodeImplementation{
@@ -43,7 +43,7 @@ func CreateMockedJoinKademlia(kademliaID *KademliaID, ip string, port int, boots
 		},
 	}
 	kademliaNode.setNetwork(network)
-	kademlia := Kademlia{
+	kademlia := KademliaImplementation{
 		Network:          network,
 		KademliaNode:     kademliaNode,
 		isBootstrap:      false,
@@ -74,32 +74,11 @@ func TestJoinWithMultipleNodes(t *testing.T) {
 
 	contacts := kademlia.KademliaNode.GetRoutingTable().FindClosestContacts(kademlia.KademliaNode.GetRoutingTable().Me.ID, 20)
 	fmt.Println(contacts)
-	doesContainAll := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me})
-	containsKademlia3 := kademlia.firstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia3.KademliaNode.GetRoutingTable().Me})
+	doesContainAll := kademlia.FirstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me})
+	containsKademlia3 := kademlia.FirstSetContainsAllContactsOfSecondSet(contacts, []Contact{kademlia3.KademliaNode.GetRoutingTable().Me})
 
 	assert.True(t, doesContainAll && containsKademlia3)
 
-}
-
-type networkMock struct{}
-
-func (network *networkMock) Listen() error {
-	return nil
-}
-func (network *networkMock) Send(ip string, port int, message []byte, timeOut time.Duration) ([]byte, error) {
-	return nil, nil
-}
-func (network *networkMock) SendPingMessage(from *Contact, contact *Contact) error {
-	return nil
-}
-func (network *networkMock) SendFindContactMessage(from *Contact, contact *Contact, id *KademliaID) ([]Contact, error) {
-	return nil, nil
-}
-func (network *networkMock) SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error) {
-	return nil, "", nil
-}
-func (network *networkMock) SendStoreMessage(from *Contact, contact *Contact, value string) bool {
-	return false
 }
 
 func TestLookupContact(t *testing.T) {
@@ -138,12 +117,12 @@ func TestLookupContact(t *testing.T) {
 	fmt.Println("closest To Target List")
 	fmt.Println(list)
 
-	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{contact1, contact2, contact3})
+	doesContainAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(list, []Contact{contact1, contact2, contact3})
 	assert.True(t, doesContainAll)
 
 }
 
-func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) Kademlia {
+func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) KademliaImplementation {
 	routingTable := NewRoutingTable(NewContact(kademliaID, ip, port))
 	dataStore := NewDataStore()
 	kademliaNode := &KademliaNodeImplementation{
@@ -159,7 +138,7 @@ func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) Kademlia 
 		},
 	}
 	kademliaNode.setNetwork(network)
-	kademlia := Kademlia{
+	kademlia := KademliaImplementation{
 		Network:      network,
 		KademliaNode: kademliaNode,
 		isBootstrap:  true,
@@ -223,7 +202,7 @@ func TestLookupContact2(t *testing.T) {
 	fmt.Println("closest To Target List")
 	fmt.Println(list)
 
-	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me, kademlia3.KademliaNode.GetRoutingTable().Me})
+	doesContainAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me, kademlia3.KademliaNode.GetRoutingTable().Me})
 	assert.True(t, doesContainAll)
 
 }
@@ -242,7 +221,7 @@ func TestLookupContact3(t *testing.T) {
 	kademlia8 := CreateMockedKademlia(NewKademliaID("FFFFFFFFFFFFFFFF000000000000000000000000"), "127.0.0.1", 13008)
 	kademlia9 := CreateMockedKademlia(NewKademliaID("0000000FFFFFFFFFFFFFFFF00000000000000000"), "127.0.0.1", 13009)
 
-	kademlias := []Kademlia{kademlia1, kademlia4, kademlia5, kademlia6, kademlia3, kademlia7, kademlia8, kademlia9, kademlia2}
+	kademlias := []KademliaImplementation{kademlia1, kademlia4, kademlia5, kademlia6, kademlia3, kademlia7, kademlia8, kademlia9, kademlia2}
 
 	go bootstrap.Start()
 	go kademlia1.Start()
@@ -282,7 +261,7 @@ func TestLookupContact3(t *testing.T) {
 
 	for _, kademlia := range kademlias {
 		list, _ := kademlia.LookupContact(kademlia1.KademliaNode.GetRoutingTable().Me.ID)
-		doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me, kademlia3.KademliaNode.GetRoutingTable().Me})
+		doesContainAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, kademlia2.KademliaNode.GetRoutingTable().Me, kademlia3.KademliaNode.GetRoutingTable().Me})
 		assert.True(t, doesContainAll)
 
 		if !doesContainAll {
@@ -350,7 +329,7 @@ func TestLookupDataFindsNoData(t *testing.T) {
 	list, _, _ := kademlia.LookupData(key)
 	fmt.Println(list)
 
-	doesContainAll := bootstrap.firstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, bootstrap.KademliaNode.GetRoutingTable().Me, kademlia.KademliaNode.GetRoutingTable().Me})
+	doesContainAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(list, []Contact{kademlia1.KademliaNode.GetRoutingTable().Me, bootstrap.KademliaNode.GetRoutingTable().Me, kademlia.KademliaNode.GetRoutingTable().Me})
 	assert.True(t, doesContainAll)
 }
 func TestStore(t *testing.T) {
@@ -390,7 +369,7 @@ func TestStore(t *testing.T) {
 	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia3.KademliaNode.GetRoutingTable().Me)
 	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
 
-	mockedKademlias := []Kademlia{
+	mockedKademlias := []KademliaImplementation{
 		kademlia1,
 		kademlia2,
 		kademlia3,
@@ -456,7 +435,7 @@ func TestLookupAfterJoin(t *testing.T) {
 	go bootstrap.Start()
 	time.Sleep(time.Second)
 
-	var kademlias []*Kademlia
+	var kademlias []*KademliaImplementation
 	var allContacts []Contact
 	for i := 0; i < 3; i++ {
 		port := 1101 + i
@@ -497,7 +476,7 @@ func TestLookupAfterJoin(t *testing.T) {
 			assert.Fail(t, err.Error())
 		}
 
-		containsAll := bootstrap.firstSetContainsAllContactsOfSecondSet(contacts, expectedClosest)
+		containsAll := bootstrap.FirstSetContainsAllContactsOfSecondSet(contacts, expectedClosest)
 		assert.True(t, containsAll)
 
 		if !containsAll {
@@ -513,12 +492,10 @@ func TestBig(t *testing.T) {
 	go bootstrap.Start()
 	time.Sleep(time.Second)
 
-	var kademlias []*Kademlia
-	var allContacts []Contact
+	var kademlias []*KademliaImplementation
 	for i := 0; i < 10; i++ {
 		port := 60001 + i
 		kademlia := NewKademlia("localhost", port, false, "localhost", 60000)
-		allContacts = append(allContacts, kademlia.KademliaNode.GetRoutingTable().Me)
 		go kademlia.Start()
 		time.Sleep(time.Microsecond * 100)
 

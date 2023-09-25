@@ -9,7 +9,17 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type Kademlia struct {
+type Kademlia interface {
+	Start()
+	Join()
+	Store(content string) (*Key, error)
+	GetKademliaNode() *KademliaNode
+	FirstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool
+	LookupContact(targetId *KademliaID) ([]Contact, error)
+	LookupData(key *Key) ([]Contact, string, error)
+}
+
+type KademliaImplementation struct {
 	Network          Network
 	KademliaNode     KademliaNode
 	isBootstrap      bool
@@ -22,8 +32,6 @@ type Lock struct {
 
 type LookupType string
 
-var lookupMutex sync.Mutex
-
 const (
 	BootstrapKademliaID   = "FFFFFFFF00000000000000000000000000000000"
 	NumberOfAlphaContacts = 3
@@ -33,7 +41,7 @@ const (
 )
 
 // NewKademlia gives new instance of a kademlia participant, it can start lisining for RPC's and join the network.
-func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *Kademlia {
+func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, bootstrapPort int) *KademliaImplementation {
 
 	kademliaNode := NewKademliaNode(ip, port, isBootstrap)
 	network := &NetworkImplementation{
@@ -53,7 +61,7 @@ func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, boot
 			bootstrapPort,
 		)
 	}
-	return &Kademlia{
+	return &KademliaImplementation{
 		Network:          network,
 		KademliaNode:     kademliaNode,
 		isBootstrap:      isBootstrap,
@@ -62,7 +70,7 @@ func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, boot
 
 }
 
-func (kademlia *Kademlia) Start() {
+func (kademlia *KademliaImplementation) Start() {
 	if !kademlia.isBootstrap {
 		go func() {
 
@@ -79,7 +87,7 @@ func (kademlia *Kademlia) Start() {
 	}
 }
 
-func (kademlia *Kademlia) refresh() {
+func (kademlia *KademliaImplementation) refresh() {
 	var lowerBound *KademliaID
 	var highBound *KademliaID
 
@@ -105,7 +113,7 @@ func (kademlia *Kademlia) refresh() {
 
 }
 
-func (kademlia *Kademlia) Join() {
+func (kademlia *KademliaImplementation) Join() {
 
 	if kademlia.isBootstrap {
 		logger.Log("You are the bootstrap node!")
@@ -131,7 +139,7 @@ func (kademlia *Kademlia) Join() {
 	kademlia.refresh()
 }
 
-func (kademlia *Kademlia) Store(content string) (*Key, error) {
+func (kademlia *KademliaImplementation) Store(content string) (*Key, error) {
 	// A node finds k nodes to check if they are close to the hash
 
 	key := HashToKey(content)
@@ -150,7 +158,11 @@ func (kademlia *Kademlia) Store(content string) (*Key, error) {
 	return key, nil
 }
 
-func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error, lock *Lock) {
+func (kademlia *KademliaImplementation) GetKademliaNode() *KademliaNode {
+	return &kademlia.KademliaNode
+}
+
+func (kademlia *KademliaImplementation) queryAlphaContacts(lookupType LookupType, contactsToQuery []Contact, queriedContacts *[]Contact, targetId KademliaID, foundContactsChannel chan []Contact, foundValueChannel chan string, queryFailedChannel chan error, lock *Lock) {
 
 	for i := 0; i < len(contactsToQuery); i++ {
 		go func(contactToQuery Contact) {
@@ -188,7 +200,7 @@ func (kademlia *Kademlia) QueryAlphaContacts(lookupType LookupType, contactsToQu
 	}
 }
 
-func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact, target *KademliaID, count int) []Contact {
+func (kademlia *KademliaImplementation) getKClosest(firstList []Contact, secondList []Contact, target *KademliaID, count int) []Contact {
 	var candidates ContactCandidates
 
 	var allContacts []Contact
@@ -217,7 +229,7 @@ func (kademlia *Kademlia) getKClosest(firstList []Contact, secondList []Contact,
 
 }
 
-func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool {
+func (kademlia *KademliaImplementation) FirstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool {
 	result := true
 
 	var firstIds []KademliaID
@@ -234,7 +246,7 @@ func (kademlia *Kademlia) firstSetContainsAllContactsOfSecondSet(first []Contact
 	return result
 }
 
-func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) []Contact {
+func (kademlia *KademliaImplementation) getContactsToQuery(queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) []Contact {
 	lock.mutex.Lock()
 	contactsToQuery := []Contact{}
 	currentAmountToQuery := 0
@@ -258,7 +270,7 @@ func (kademlia *Kademlia) getContactsToQuery(queriedContacts *[]Contact, closest
 	return contactsToQuery
 }
 
-func (kademlia *Kademlia) lookupRound(lookupType LookupType, targetId *KademliaID, lookupCompleteChannel chan bool, lookupDataChannel chan string, stop *bool, previousClosestToTargetList []Contact, queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) {
+func (kademlia *KademliaImplementation) lookupRound(lookupType LookupType, targetId *KademliaID, lookupCompleteChannel chan bool, lookupDataChannel chan string, stop *bool, previousClosestToTargetList []Contact, queriedContacts *[]Contact, closestToTargetList *[]Contact, lock *Lock) {
 	contactsToQuery := kademlia.getContactsToQuery(queriedContacts, closestToTargetList, lock)
 	lock.mutex.Lock()
 	if *stop {
@@ -271,7 +283,7 @@ func (kademlia *Kademlia) lookupRound(lookupType LookupType, targetId *KademliaI
 	foundValueChannel := make(chan string)
 	queryFailedChannel := make(chan error)
 
-	kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, foundValueChannel, queryFailedChannel, lock)
+	kademlia.queryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, foundValueChannel, queryFailedChannel, lock)
 	timesFailed := 0
 
 Loop:
@@ -301,7 +313,7 @@ Loop:
 
 	}
 	lock.mutex.Lock()
-	if (len(previousClosestToTargetList) != 0 && kademlia.firstSetContainsAllContactsOfSecondSet(*closestToTargetList, previousClosestToTargetList) && kademlia.firstSetContainsAllContactsOfSecondSet(previousClosestToTargetList, *closestToTargetList)) || timesFailed >= len(contactsToQuery) {
+	if (len(previousClosestToTargetList) != 0 && kademlia.FirstSetContainsAllContactsOfSecondSet(*closestToTargetList, previousClosestToTargetList) && kademlia.FirstSetContainsAllContactsOfSecondSet(previousClosestToTargetList, *closestToTargetList)) || timesFailed >= len(contactsToQuery) {
 		*stop = true
 		lock.mutex.Unlock()
 		lookupCompleteChannel <- true
@@ -310,7 +322,7 @@ Loop:
 	}
 }
 
-func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([]Contact, string, error) {
+func (kademlia *KademliaImplementation) lookup(lookupType LookupType, targetId *KademliaID) ([]Contact, string, error) {
 
 	lock := &Lock{}
 	queriedContacts := new([]Contact)
@@ -345,7 +357,7 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 		foundContactsChannel := make(chan []Contact)
 		queryFailedChannel := make(chan error)
 
-		kademlia.QueryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, nil, queryFailedChannel, lock)
+		kademlia.queryAlphaContacts(lookupType, contactsToQuery, queriedContacts, *targetId, foundContactsChannel, nil, queryFailedChannel, lock)
 		fmt.Println("New")
 
 		for i := 0; i < len(contactsToQuery); i++ {
@@ -370,12 +382,12 @@ func (kademlia *Kademlia) lookup(lookupType LookupType, targetId *KademliaID) ([
 
 }
 
-func (kademlia *Kademlia) LookupContact(targetId *KademliaID) ([]Contact, error) {
+func (kademlia *KademliaImplementation) LookupContact(targetId *KademliaID) ([]Contact, error) {
 	kClosest, _, err := kademlia.lookup(LOOKUP_CONTACT, targetId)
 	return kClosest, err
 }
 
-func (kademlia *Kademlia) LookupData(key *Key) ([]Contact, string, error) {
+func (kademlia *KademliaImplementation) LookupData(key *Key) ([]Contact, string, error) {
 	kClosest, value, err := kademlia.lookup(LOOKUP_DATA, key.GetKademliaIdRepresentationOfKey())
 	return kClosest, value, err
 
