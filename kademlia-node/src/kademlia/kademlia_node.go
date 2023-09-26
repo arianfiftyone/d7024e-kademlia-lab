@@ -73,14 +73,7 @@ func (kademliaNode *KademliaNodeImplementation) updateRoutingTable(contact Conta
 	if bucket.Len() < bucketSize {
 		kademliaNode.RoutingTable.AddContact(contact)
 
-	} else {
-		for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
-			foundContact := elt.Value.(Contact)
-			if foundContact.ID == contact.ID {
-				return
-			}
-		}
-
+	} else if !bucket.Contains(contact) {
 		lastContact := bucket.list.Back().Value.(Contact)
 
 		// Ping the last node in the bucket, replace if it does not respond otherwize do nothing
