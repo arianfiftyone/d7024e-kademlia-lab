@@ -76,7 +76,7 @@ func (kademliaNode *KademliaNodeImplementation) updateRoutingTable(contact Conta
 	} else {
 		for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 			foundContact := elt.Value.(Contact)
-			if foundContact.ID == contact.distance {
+			if foundContact.ID == contact.ID {
 				return
 			}
 		}
