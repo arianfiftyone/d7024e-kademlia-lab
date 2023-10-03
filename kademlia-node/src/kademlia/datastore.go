@@ -2,22 +2,29 @@ package kademlia
 
 import (
 	"errors"
+	"time"
 )
 
 // DataStore represents a key-value data store.
 type DataStore struct {
 	data map[[KeySize]byte]string // Map to store key-value pairs.
+	time map[[KeySize]byte]int64  // Map to store key-time for expiration pairs. Unix time.
+	ttl  int64                    //seconds
 }
 
 // NewDataStore initializes a new DataStore instance.
 func NewDataStore() DataStore {
 	dataStore := DataStore{}
 	dataStore.data = make(map[[KeySize]byte]string)
+	dataStore.time = make(map[[KeySize]byte]int64)
+	dataStore.ttl = 10
 	return dataStore
 }
 
 // Insert inserts a key-value pair into the DataStore.
 func (dataStore DataStore) Insert(key *Key, value string) {
+	ttl := dataStore.calculateExpirationTime()
+	dataStore.time[key.Hash] = ttl
 	dataStore.data[key.Hash] = value
 }
 
@@ -28,4 +35,16 @@ func (dataStore DataStore) Get(key *Key) (string, error) {
 		return "", errors.New("key not found")
 	}
 	return value, nil
+}
+
+func (dataStore DataStore) GetTime(key *Key) (int64, error) {
+	time, ok := dataStore.time[key.Hash]
+	if !ok {
+		return 0, errors.New("key not found")
+	}
+	return time, nil
+}
+
+func (dataStore DataStore) calculateExpirationTime() int64 {
+	return time.Now().Unix() + dataStore.ttl
 }
