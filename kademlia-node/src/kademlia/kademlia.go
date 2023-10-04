@@ -144,7 +144,7 @@ func (kademlia *KademliaImplementation) Join() {
 func (kademlia *KademliaImplementation) Store(content string) (*Key, error) {
 	// A node finds k nodes to check if they are close to the hash
 
-	key := HashToKey(content)
+	key := NewKey(content)
 	contacts, err := kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
 
 	if err != nil {

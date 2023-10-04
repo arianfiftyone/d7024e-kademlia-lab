@@ -19,7 +19,7 @@ type KademliaMock struct {
 func (KademliaMock *KademliaMock) Start() {}
 func (KademliaMock *KademliaMock) Join()  {}
 func (KademliaMock *KademliaMock) Store(content string) (*kademlia.Key, error) {
-	return kademlia.HashToKey(content), nil
+	return kademlia.NewKey(content), nil
 }
 
 func (KademliaMock *KademliaMock) GetKademliaNode() *kademlia.KademliaNode {
@@ -59,7 +59,7 @@ func trimNewlineFromWriterOutput(output io.Writer) string {
 
 func TestGet(t *testing.T) {
 	content := "kademlia"
-	key := kademlia.HashToKey(content)
+	key := kademlia.NewKey(content)
 
 	dataStore := kademlia.NewDataStore()
 	dataStore.Insert(key, content)
@@ -103,7 +103,7 @@ func TestAbbreviatedGetCommand(t *testing.T) {
 
 func TestPut(t *testing.T) {
 	value := "kademlia"
-	key := kademlia.HashToKey(value)
+	key := kademlia.NewKey(value)
 
 	cli := NewCli(&KademliaMock{})
 	command := []string{
