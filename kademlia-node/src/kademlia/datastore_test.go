@@ -3,6 +3,7 @@ package kademlia
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 // TestNewDataStore tests the NewDataStore function.
@@ -51,5 +52,28 @@ func TestInsertAndGet(t *testing.T) {
 	_, err = dataStore.Get(keyNotExisting)
 	if err == nil {
 		t.Errorf("Get: Expected error for non-existent key, but got none")
+	}
+}
+
+func TestInsertAndGetTime(t *testing.T) {
+	dataStore := NewDataStore()
+
+	// Insert a key-value pair
+	value := "testValue"
+	key := HashToKey(value)
+	dataStore.Insert(key, value)
+
+	// Retrieve the time associated with the key
+	insertedTime, err := dataStore.GetTime(key)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	// Calculate the expected expiration time
+	expectedTime := time.Now().Unix() + dataStore.ttl
+
+	// Check if the retrieved time is within a small tolerance (1 second) of the expected time
+	if insertedTime < expectedTime-1 || insertedTime > expectedTime+1 {
+		t.Errorf("Expected time to be roughly %v, but got %v", expectedTime, insertedTime)
 	}
 }
