@@ -315,7 +315,7 @@ func TestLookupDataFindsNoData(t *testing.T) {
 	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
 
 	value := "value"
-	key := HashToKey(value)
+	key := NewKey(value)
 
 	go bootstrap.Start()
 	go kademlia1.Start()

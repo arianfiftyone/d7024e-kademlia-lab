@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arianfiftyone/src/api"
 	"github.com/arianfiftyone/src/cli"
 	"github.com/arianfiftyone/src/kademlia"
 	"github.com/arianfiftyone/src/logger"
@@ -25,12 +26,12 @@ func main() {
 	BOOSTRAP_NODE_HOSTNAME := os.Getenv("BOOSTRAP_NODE_HOSTNAME")
 
 	IS_BOOTSTRAP_STR := os.Getenv("IS_BOOTSTRAP")
-	isBootsrap := strings.ToLower(IS_BOOTSTRAP_STR) == "true"
+	isBootstrap := strings.ToLower(IS_BOOTSTRAP_STR) == "true"
 
 	var bootstrapPort int
 	var bootstrapIp string
 
-	if !isBootsrap {
+	if !isBootstrap {
 		bootstrapIps, err := net.LookupIP(BOOSTRAP_NODE_HOSTNAME)
 		if err != nil {
 			panic(err)
@@ -62,8 +63,8 @@ func main() {
 	}
 	ip := ips[0].String()
 
-	KademliaInstance := kademlia.NewKademlia(ip, port, isBootsrap, bootstrapIp, bootstrapPort)
-	if isBootsrap {
+	KademliaInstance := kademlia.NewKademlia(ip, port, isBootstrap, bootstrapIp, bootstrapPort)
+	if isBootstrap {
 		http.HandleFunc("/", health)
 		go http.ListenAndServe(":80", nil)
 
@@ -74,6 +75,8 @@ func main() {
 	go KademliaInstance.Start()
 	time.Sleep(500 * time.Millisecond)
 
+	api := api.NewKademliaAPI(KademliaInstance)
+	go api.StartAPI()
 	cli := cli.NewCli(KademliaInstance)
 	cli.StartCli(output)
 

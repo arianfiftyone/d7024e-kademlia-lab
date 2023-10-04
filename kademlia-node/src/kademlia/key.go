@@ -13,7 +13,7 @@ type Key struct {
 	Hash [KeySize]byte
 }
 
-func HashToKey(value string) *Key {
+func NewKey(value string) *Key {
 	bytes := []byte(value)
 	hash := sha1.Sum(bytes)
 
