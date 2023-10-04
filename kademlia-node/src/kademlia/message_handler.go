@@ -27,7 +27,7 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 	if err := message.MessageType.IsValid(); err != nil {
 		return nil, err
-	} else {
+	} else if message.MessageType != PONG {
 		messageHandler.kademliaNode.updateRoutingTable(message.From)
 	}
 

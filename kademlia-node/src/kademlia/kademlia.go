@@ -2,7 +2,6 @@ package kademlia
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/arianfiftyone/src/logger"
@@ -306,8 +305,6 @@ Loop:
 
 		case queryFailedError := <-queryFailedChannel:
 			logger.Log("Failed to find node in channel: " + queryFailedError.Error())
-			fmt.Println("")
-			fmt.Println("Failed to find node in channel: " + queryFailedError.Error())
 
 			timesFailed++
 
@@ -369,7 +366,6 @@ func (kademlia *KademliaImplementation) lookup(lookupType LookupType, targetId *
 				lock.mutex.Unlock()
 			case queryFailedError := <-queryFailedChannel:
 				logger.Log("Failed to find node in channel: " + queryFailedError.Error())
-				fmt.Println("Failed to find node in channel: " + queryFailedError.Error())
 
 			}
 

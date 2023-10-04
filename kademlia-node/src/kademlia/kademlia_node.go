@@ -1,6 +1,8 @@
 package kademlia
 
-import "github.com/arianfiftyone/src/logger"
+import (
+	"github.com/arianfiftyone/src/logger"
+)
 
 const (
 	NumberOfClosestNodesToRetrieved = 3 // Must be atleast 3, otherwize some tests will fail
@@ -71,7 +73,7 @@ func (kademliaNode *KademliaNodeImplementation) updateRoutingTable(contact Conta
 	if bucket.Len() < bucketSize {
 		kademliaNode.RoutingTable.AddContact(contact)
 
-	} else {
+	} else if !bucket.Contains(contact) {
 		lastContact := bucket.list.Back().Value.(Contact)
 
 		// Ping the last node in the bucket, replace if it does not respond otherwize do nothing
