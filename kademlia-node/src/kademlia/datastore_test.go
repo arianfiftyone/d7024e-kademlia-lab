@@ -78,7 +78,7 @@ func TestInsertAndGetTime(t *testing.T) {
 	fmt.Println(insertedTime)
 	fmt.Println(expectedTime)
 
-	// Check if the retrieved time is within a small tolerance (1 second) of the expected time
+	// Check if the retrieved time is within a small tolerance (1/2 second) of the expected time
 	if expectedTime.Sub((insertedTime)) > time.Millisecond*500 {
 		t.Errorf("Expected time to be roughly %v, but got %v", expectedTime, insertedTime)
 	}

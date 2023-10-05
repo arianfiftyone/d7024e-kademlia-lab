@@ -66,10 +66,11 @@ func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, boot
 		)
 	}
 	return &KademliaImplementation{
-		Network:          network,
-		KademliaNode:     kademliaNode,
-		isBootstrap:      isBootstrap,
-		bootstrapContact: &contact,
+		Network:             network,
+		KademliaNode:        kademliaNode,
+		isBootstrap:         isBootstrap,
+		bootstrapContact:    &contact,
+		keyToStopRefreshMap: make(map[[KeySize]byte]chan bool),
 	}
 
 }

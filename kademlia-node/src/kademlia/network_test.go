@@ -295,3 +295,46 @@ func TestConcurrentSends(t *testing.T) {
 	time.Sleep(time.Second)
 
 }
+
+type MockMessageHandlerRefresh struct {
+}
+
+func (mockMessageHandler *MockMessageHandlerRefresh) HandleMessage(rawMessage []byte) ([]byte, error) {
+	var refreshExpirationTime RefreshExpirationTime
+
+	json.Unmarshal(rawMessage, &refreshExpirationTime)
+	if refreshExpirationTime.MessageType == REFRESH_EXPIRATION_TIME {
+		bytes, _ := json.Marshal(NewExpirationTimeHasBeenRefreshedMessage(NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost", 8001)))
+		return bytes, nil
+
+	} else {
+		return make([]byte, 0), nil
+
+	}
+}
+
+func TestSendRefreshMessage(t *testing.T) {
+	// Create a mock Contact for testing
+	mockContact := Contact{
+		ID:       NewRandomKademliaID(),
+		Ip:       "127.0.0.1",
+		Port:     30000,
+		distance: nil,
+	}
+
+	// Create a mock Network instance
+	mockNetwork := &NetworkImplementation{
+		Ip:             "127.0.0.1",
+		Port:           30000,
+		MessageHandler: &MockMessageHandlerRefresh{},
+	}
+
+	key := HashToKey("test")
+
+	go mockNetwork.Listen()
+	time.Sleep(time.Second)
+
+	from := NewContact(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), mockNetwork.Ip, mockNetwork.Port)
+	response := mockNetwork.SendRefreshExpirationTimeMessage(&from, &mockContact, key)
+	assert.True(t, response)
+}

@@ -138,10 +138,13 @@ func CreateMockedKademlia(kademliaID *KademliaID, ip string, port int) KademliaI
 		},
 	}
 	kademliaNode.setNetwork(network)
+
+	ketToStopRefreshMap := make(map[[KeySize]byte]chan bool)
 	kademlia := KademliaImplementation{
-		Network:      network,
-		KademliaNode: kademliaNode,
-		isBootstrap:  true,
+		Network:             network,
+		KademliaNode:        kademliaNode,
+		isBootstrap:         true,
+		keyToStopRefreshMap: ketToStopRefreshMap,
 	}
 
 	return kademlia
@@ -309,17 +312,14 @@ func TestLookupDataFindsNoData(t *testing.T) {
 	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10030)
 
 	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10031)
-	kademlia2 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 10032)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
-	kademlia1.KademliaNode.GetRoutingTable().AddContact(kademlia2.KademliaNode.GetRoutingTable().Me)
 
 	value := "value"
 	key := HashToKey(value)
 
 	go bootstrap.Start()
 	go kademlia1.Start()
-	go kademlia2.Start()
 	time.Sleep(time.Second)
 
 	kademlia := NewKademlia("127.0.0.1", 4030, false, "", 0)
@@ -533,4 +533,74 @@ func TestBig(t *testing.T) {
 
 	}
 
+}
+
+func TestRefresh(t *testing.T) {
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 31000)
+
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4000, false, "", 0)
+
+	kademlia.KademliaNode.GetRoutingTable().AddContact(bootstrap.KademliaNode.GetRoutingTable().Me)
+
+	content := "testy"
+	key, err := kademlia.Store(content)
+
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	initTime, err := bootstrap.KademliaNode.GetDataStore().GetTime(key)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	time.Sleep((bootstrap.KademliaNode.GetDataStore().ttl / 2) + time.Millisecond*100)
+
+	endTime, err := bootstrap.KademliaNode.GetDataStore().GetTime(key)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	fmt.Println(initTime)
+	fmt.Println(endTime)
+	assert.Greater(t, endTime, initTime.Add(bootstrap.KademliaNode.GetDataStore().ttl/2))
+}
+
+func TestStopRefresh(t *testing.T) {
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 31001)
+
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4000, false, "", 0)
+
+	kademlia.KademliaNode.GetRoutingTable().AddContact(bootstrap.KademliaNode.GetRoutingTable().Me)
+
+	content := "testy"
+	key, err := kademlia.Store(content)
+
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	initTime, err := bootstrap.KademliaNode.GetDataStore().GetTime(key)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+	kademlia.keyToStopRefreshMap[key.Hash] <- true
+
+	time.Sleep((bootstrap.KademliaNode.GetDataStore().ttl / 2) + time.Millisecond*100)
+
+	endTime, err := bootstrap.KademliaNode.GetDataStore().GetTime(key)
+	if err != nil {
+		t.Errorf("Expected no error, but got %v", err)
+	}
+
+	fmt.Println(initTime)
+	fmt.Println(endTime)
+
+	assert.Equal(t, initTime, endTime)
 }
