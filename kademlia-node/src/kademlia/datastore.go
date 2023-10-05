@@ -36,12 +36,12 @@ func (dataStore DataStore) Get(key *Key) (string, error) {
 	return value, nil
 }
 
-func (dataStore DataStore) GetTime(key *Key) (*time.Time, error) {
+func (dataStore DataStore) GetTime(key *Key) (time.Time, error) {
 	time, ok := dataStore.time[key.Hash]
 	if !ok {
-		return nil, errors.New("key not found")
+		return time, errors.New("key not found")
 	}
-	return &time, nil
+	return time, nil
 }
 
 func (dataStore DataStore) calculateExpirationTime() time.Time {

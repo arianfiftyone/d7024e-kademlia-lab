@@ -75,11 +75,11 @@ func TestInsertAndGetTime(t *testing.T) {
 	// Calculate the expected expiration time
 	expectedTime := time.Now().Add(dataStore.ttl)
 
-	fmt.Println(*insertedTime)
+	fmt.Println(insertedTime)
 	fmt.Println(expectedTime)
 
 	// Check if the retrieved time is within a small tolerance (1 second) of the expected time
-	if expectedTime.Sub((*insertedTime)) > time.Millisecond*500 {
+	if expectedTime.Sub((insertedTime)) > time.Millisecond*500 {
 		t.Errorf("Expected time to be roughly %v, but got %v", expectedTime, insertedTime)
 	}
 }
@@ -112,5 +112,5 @@ func TestRefreshExpirationTime(t *testing.T) {
 	fmt.Println(insertedTime)
 	fmt.Println(newTime)
 
-	assert.Greater(t, *newTime, insertedTime.Add(delay))
+	assert.Greater(t, newTime, insertedTime.Add(delay))
 }
