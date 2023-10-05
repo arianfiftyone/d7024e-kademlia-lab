@@ -60,7 +60,7 @@ func TestInsertAndGetTime(t *testing.T) {
 
 	// Insert a key-value pair
 	value := "testValue"
-	key := HashToKey(value)
+	key := NewKey(value)
 	dataStore.Insert(key, value)
 
 	// Retrieve the time associated with the key
