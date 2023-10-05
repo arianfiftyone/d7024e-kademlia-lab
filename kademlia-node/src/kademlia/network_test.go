@@ -329,7 +329,7 @@ func TestSendRefreshMessage(t *testing.T) {
 		MessageHandler: &MockMessageHandlerRefresh{},
 	}
 
-	key := HashToKey("test")
+	key := NewKey("test")
 
 	go mockNetwork.Listen()
 	time.Sleep(time.Second)

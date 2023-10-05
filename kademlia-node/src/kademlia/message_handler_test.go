@@ -212,7 +212,7 @@ func TestRefreshExpirationTimeMessage(t *testing.T) {
 	contact := NewContact(NewRandomKademliaID(), "127.0.0.1", 80)
 	dataStore := NewDataStore()
 	value := "test"
-	key := HashToKey(value)
+	key := NewKey(value)
 	dataStore.Insert(key, value)
 
 	messageHandler := &MessageHandlerImplementation{
