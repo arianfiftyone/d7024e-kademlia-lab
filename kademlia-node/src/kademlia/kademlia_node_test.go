@@ -49,6 +49,10 @@ func (network *NetworkMock) SendStoreMessage(from *Contact, contact *Contact, ke
 	return false
 }
 
+func (network *NetworkMock) SendRefreshExpirationTimeMessage(from *Contact, contact *Contact, key *Key) bool {
+	return false
+}
+
 func TestUpdateRoutingTableFullTable(t *testing.T) {
 	kademliaNode := NewKademliaNode("127.0.0.1", 3002, false)
 	kademliaNode.setNetwork(&NetworkMock{})

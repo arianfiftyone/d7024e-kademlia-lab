@@ -207,3 +207,35 @@ func TestStoreMessage(t *testing.T) {
 	assert.Equal(t, STORE_RESPONSE, message.MessageType)
 
 }
+
+func TestRefreshExpirationTimeMessage(t *testing.T) {
+	contact := NewContact(NewRandomKademliaID(), "127.0.0.1", 80)
+	dataStore := NewDataStore()
+	value := "test"
+	key := NewKey(value)
+	dataStore.Insert(key, value)
+
+	messageHandler := &MessageHandlerImplementation{
+		kademliaNode: &KademliaNodeMock{
+			me:        &contact,
+			DataStore: &dataStore,
+		},
+	}
+
+	refresh := NewRefreshExpirationTimeMessage(NewContact(NewRandomKademliaID(), "127.0.0.1", 80), key)
+	bytes, err := json.Marshal(refresh)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	response, err := messageHandler.HandleMessage(bytes)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	var message Message
+	errUnmarshal := json.Unmarshal(response, &message)
+	if errUnmarshal != nil {
+		assert.Fail(t, errUnmarshal.Error())
+	}
+	assert.Equal(t, EXPIRATION_TIME_HAS_BEEN_REFRESHED, message.MessageType)
+
+}

@@ -3,6 +3,7 @@ package kademlia
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/arianfiftyone/src/logger"
 	"golang.org/x/exp/slices"
@@ -19,10 +20,11 @@ type Kademlia interface {
 }
 
 type KademliaImplementation struct {
-	Network          Network
-	KademliaNode     KademliaNode
-	isBootstrap      bool
-	bootstrapContact *Contact
+	Network             Network
+	KademliaNode        KademliaNode
+	isBootstrap         bool
+	bootstrapContact    *Contact
+	keyToStopRefreshMap (map[[KeySize]byte]chan bool) // The key represents the hash of a stored value, and the channel it maps to will stop refreshing the value if called on
 }
 
 type Lock struct {
@@ -63,10 +65,11 @@ func NewKademlia(ip string, port int, isBootstrap bool, bootstrapIp string, boot
 		)
 	}
 	return &KademliaImplementation{
-		Network:          network,
-		KademliaNode:     kademliaNode,
-		isBootstrap:      isBootstrap,
-		bootstrapContact: &contact,
+		Network:             network,
+		KademliaNode:        kademliaNode,
+		isBootstrap:         isBootstrap,
+		bootstrapContact:    &contact,
+		keyToStopRefreshMap: make(map[[KeySize]byte]chan bool),
 	}
 
 }
@@ -153,6 +156,26 @@ func (kademlia *KademliaImplementation) Store(content string) (*Key, error) {
 	if len(contacts) <= 0 {
 		return nil, errors.New("found no node to store the value in")
 	}
+
+	kademlia.keyToStopRefreshMap[key.Hash] = make(chan bool)
+	// the contacts will be refreshed twice each time to live (ttl) time cycle
+	go func(key *Key, contacts []Contact) {
+		for {
+			select {
+			case stopRefresh := <-kademlia.keyToStopRefreshMap[key.Hash]:
+				if stopRefresh {
+					return
+
+				}
+			case <-time.After(time.Duration(kademlia.KademliaNode.GetDataStore().ttl / 2)):
+				for _, contact := range contacts {
+					kademlia.Network.SendRefreshExpirationTimeMessage(&kademlia.KademliaNode.GetRoutingTable().Me, &contact, key)
+				}
+			}
+
+		}
+	}(key, contacts)
+
 	for _, contact := range contacts {
 		kademlia.Network.SendStoreMessage(&kademlia.KademliaNode.GetRoutingTable().Me, &contact, key, content)
 	}

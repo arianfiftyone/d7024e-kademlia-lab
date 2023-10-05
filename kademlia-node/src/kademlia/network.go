@@ -17,6 +17,7 @@ type Network interface {
 	SendFindContactMessage(from *Contact, contact *Contact, id *KademliaID) ([]Contact, error)
 	SendFindDataMessage(from *Contact, contact *Contact, key *Key) ([]Contact, string, error)
 	SendStoreMessage(from *Contact, contact *Contact, key *Key, value string) bool
+	SendRefreshExpirationTimeMessage(from *Contact, contact *Contact, key *Key) bool
 }
 
 type NetworkImplementation struct {
@@ -229,4 +230,28 @@ func (network *NetworkImplementation) SendStoreMessage(from *Contact, contact *C
 
 	return storeResponse.StoreSuccess
 
+}
+
+func (network *NetworkImplementation) SendRefreshExpirationTimeMessage(from *Contact, contact *Contact, key *Key) bool {
+	refreshExpirationTime := NewRefreshExpirationTimeMessage(*from, key)
+	bytes, err := json.Marshal(refreshExpirationTime)
+
+	if err != nil {
+		logger.Log("Error when marshaling `refreshExpirationTime` message: " + err.Error())
+		return false
+	}
+	response, err := network.Send(contact.Ip, contact.Port, bytes, time.Second*3)
+	if err != nil {
+		logger.Log("Refresh expiration time failed: " + err.Error())
+		return false
+	}
+	var expirationTimeHasBeenRefreshed ExpirationTimeHasBeenRefreshed
+	err = json.Unmarshal(response, &expirationTimeHasBeenRefreshed)
+
+	if err != nil {
+		logger.Log("Error when unmarshaling `expirationTimeHasBeenRefreshed` message: " + err.Error())
+		return false
+	}
+
+	return true
 }
