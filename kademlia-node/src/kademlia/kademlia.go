@@ -2,7 +2,6 @@ package kademlia
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -147,7 +146,7 @@ func (kademlia *KademliaImplementation) Join() {
 func (kademlia *KademliaImplementation) Store(content string) (*Key, error) {
 	// A node finds k nodes to check if they are close to the hash
 
-	key := HashToKey(content)
+	key := NewKey(content)
 	contacts, err := kademlia.LookupContact(key.GetKademliaIdRepresentationOfKey())
 
 	if err != nil {
@@ -329,8 +328,6 @@ Loop:
 
 		case queryFailedError := <-queryFailedChannel:
 			logger.Log("Failed to find node in channel: " + queryFailedError.Error())
-			fmt.Println("")
-			fmt.Println("Failed to find node in channel: " + queryFailedError.Error())
 
 			timesFailed++
 
@@ -392,7 +389,6 @@ func (kademlia *KademliaImplementation) lookup(lookupType LookupType, targetId *
 				lock.mutex.Unlock()
 			case queryFailedError := <-queryFailedChannel:
 				logger.Log("Failed to find node in channel: " + queryFailedError.Error())
-				fmt.Println("Failed to find node in channel: " + queryFailedError.Error())
 
 			}
 

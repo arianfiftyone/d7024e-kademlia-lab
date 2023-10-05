@@ -57,6 +57,16 @@ func (bucket *bucket) Len() int {
 	return bucket.list.Len()
 }
 
+func (bucket *bucket) Contains(contact Contact) bool {
+	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
+		foundContact := elt.Value.(Contact)
+		if foundContact.ID == contact.ID {
+			return true
+		}
+	}
+	return false
+}
+
 func (bucket *bucket) RemoveLastIfFull() bool {
 	if bucket.list.Len() < bucketSize {
 		return false

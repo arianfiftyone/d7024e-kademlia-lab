@@ -309,14 +309,14 @@ func TestLookupDataFindsData(t *testing.T) {
 
 func TestLookupDataFindsNoData(t *testing.T) {
 
-	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10030)
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 10031)
 
-	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10031)
+	kademlia1 := CreateMockedKademlia(GenerateNewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 10032)
 
 	bootstrap.KademliaNode.GetRoutingTable().AddContact(kademlia1.KademliaNode.GetRoutingTable().Me)
 
 	value := "value"
-	key := HashToKey(value)
+	key := NewKey(value)
 
 	go bootstrap.Start()
 	go kademlia1.Start()

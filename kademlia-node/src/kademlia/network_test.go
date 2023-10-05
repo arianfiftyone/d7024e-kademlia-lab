@@ -173,7 +173,7 @@ func TestSendNodeDataMessage(t *testing.T) {
 	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 7010)
 
 	value := "data"
-	key := HashToKey(value)
+	key := NewKey(value)
 
 	bootstrap.KademliaNode.GetDataStore().Insert(key, value)
 	go bootstrap.Start()
@@ -196,7 +196,7 @@ func TestSendNodeDataMessageNoData(t *testing.T) {
 	go bootstrap.Start()
 	time.Sleep(time.Second)
 	value := "data"
-	key := HashToKey(value)
+	key := NewKey(value)
 	contacts, _, _ := bootstrap.Network.SendFindDataMessage(&bootstrap.KademliaNode.GetRoutingTable().Me, &bootstrap.KademliaNode.GetRoutingTable().Me, key)
 
 	kClosest := bootstrap.KademliaNode.GetRoutingTable().FindClosestContacts(bootstrap.KademliaNode.GetRoutingTable().Me.ID, NumberOfClosestNodesToRetrieved)

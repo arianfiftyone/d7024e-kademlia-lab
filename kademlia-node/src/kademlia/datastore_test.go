@@ -23,7 +23,7 @@ func TestInsert(t *testing.T) {
 	dataStore := NewDataStore()
 
 	value := string("testValue")
-	key := HashToKey(value)
+	key := NewKey(value)
 
 	dataStore.Insert(key, value)
 
@@ -36,7 +36,7 @@ func TestInsertAndGet(t *testing.T) {
 	dataStore := NewDataStore()
 
 	value := "testValue"
-	key := HashToKey(value)
+	key := NewKey(value)
 
 	dataStore.Insert(key, value)
 
@@ -51,7 +51,7 @@ func TestInsertAndGet(t *testing.T) {
 
 	// Test case for a non-existent key
 	value2 := "testValue2" // refers to key that has not been previously inserted into data store
-	keyNotExisting := HashToKey(value2)
+	keyNotExisting := NewKey(value2)
 	_, err = dataStore.Get(keyNotExisting)
 	if err == nil {
 		t.Errorf("Get: Expected error for non-existent key, but got none")
@@ -63,7 +63,7 @@ func TestInsertAndGetTime(t *testing.T) {
 
 	// Insert a key-value pair
 	value := "testValue"
-	key := HashToKey(value)
+	key := NewKey(value)
 	dataStore.Insert(key, value)
 
 	// Retrieve the time associated with the key
