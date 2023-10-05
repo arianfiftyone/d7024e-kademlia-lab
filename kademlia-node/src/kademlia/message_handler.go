@@ -110,6 +110,19 @@ func (messageHandler *MessageHandlerImplementation) HandleMessage(rawMessage []b
 
 		return bytes, nil
 
+	case REFRESH_EXPIRATION_TIME:
+		var refreshExpirationTime RefreshExpirationTime
+
+		json.Unmarshal(rawMessage, &refreshExpirationTime)
+
+		err := messageHandler.kademliaNode.GetDataStore().RefreshExpirationTime(refreshExpirationTime.Key)
+		if err != nil {
+			return nil, err
+		}
+		expirationTimeHasBeenRefreshed := NewExpirationTimeHasBeenRefreshedMessage(messageHandler.kademliaNode.GetRoutingTable().Me)
+		bytes, err := json.Marshal(expirationTimeHasBeenRefreshed)
+		return bytes, nil
+
 	default:
 		errorMessage := NewErrorMessage(messageHandler.kademliaNode.GetRoutingTable().Me)
 		bytes, err := json.Marshal(errorMessage)

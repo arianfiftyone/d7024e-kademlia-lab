@@ -5,20 +5,22 @@ import "errors"
 type MessageType string
 
 const (
-	ERROR          MessageType = "ERROR"
-	PING           MessageType = "PING"
-	PONG           MessageType = "PONG"
-	FIND_NODE      MessageType = "FIND_NODE"
-	FIND_DATA      MessageType = "FIND_DATA"
-	STORE          MessageType = "STORE"
-	STORE_RESPONSE MessageType = "STORE_RESPONSE"
-	FOUND_CONTACTS MessageType = "FOUND_CONTACTS"
-	FOUND_DATA     MessageType = "FOUND_DATA"
+	ERROR                              MessageType = "ERROR"
+	PING                               MessageType = "PING"
+	PONG                               MessageType = "PONG"
+	FIND_NODE                          MessageType = "FIND_NODE"
+	FIND_DATA                          MessageType = "FIND_DATA"
+	STORE                              MessageType = "STORE"
+	STORE_RESPONSE                     MessageType = "STORE_RESPONSE"
+	FOUND_CONTACTS                     MessageType = "FOUND_CONTACTS"
+	FOUND_DATA                         MessageType = "FOUND_DATA"
+	REFRESH_EXPIRATION_TIME            MessageType = "REFRESH_EXPIRATION_TIME"
+	EXPIRATION_TIME_HAS_BEEN_REFRESHED MessageType = "EXPIRATION_TIME_HAS_BEEN_REFRESHED"
 )
 
 func (messageType MessageType) IsValid() error {
 	switch messageType {
-	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA: // Add new messageTypes to the case, so it is seen as a valid type
+	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA, REFRESH_EXPIRATION_TIME: // Add new messageTypes to the case, so it is seen as a valid type
 		return nil
 	}
 	return errors.New("Invalid message type")
@@ -179,4 +181,36 @@ func NewFoundDataMessage(from Contact, contacts []Contact, value string) FoundDa
 		value,
 	}
 
+}
+
+type RefreshExpirationTime struct {
+	Message
+	Key *Key
+}
+
+func NewRefreshExpirationTimeMessage(from Contact, key *Key) RefreshExpirationTime {
+	message := Message{
+		MessageType: REFRESH_EXPIRATION_TIME,
+		From:        from,
+	}
+
+	return RefreshExpirationTime{
+		Message: message,
+		Key:     key,
+	}
+}
+
+type ExpirationTimeHasBeenRefreshed struct {
+	Message
+}
+
+func NewExpirationTimeHasBeenRefreshedMessage(from Contact) ExpirationTimeHasBeenRefreshed {
+	message := Message{
+		MessageType: EXPIRATION_TIME_HAS_BEEN_REFRESHED,
+		From:        from,
+	}
+
+	return ExpirationTimeHasBeenRefreshed{
+		Message: message,
+	}
 }
