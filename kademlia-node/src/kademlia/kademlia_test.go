@@ -604,3 +604,32 @@ func TestStopRefresh(t *testing.T) {
 
 	assert.Equal(t, initTime, endTime)
 }
+
+func TestForget(t *testing.T) {
+	bootstrap := CreateMockedKademlia(GenerateNewKademliaID("FFFFFFFF00000000000000000000000000000000"), "127.0.0.1", 31011)
+
+	go bootstrap.Start()
+	time.Sleep(time.Second)
+
+	kademlia := NewKademlia("127.0.0.1", 4001, false, "", 0)
+
+	kademlia.KademliaNode.GetRoutingTable().AddContact(bootstrap.KademliaNode.GetRoutingTable().Me)
+
+	content := "testy"
+	key, err := kademlia.Store(content)
+
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	err = kademlia.Forget(key)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	time.Sleep((bootstrap.KademliaNode.GetDataStore().ttl / 2) + time.Millisecond*100)
+
+	expectedMap := map[[KeySize]byte]string{}
+
+	assert.Equal(t, expectedMap, kademlia.KademliaNode.GetDataStore().data)
+}

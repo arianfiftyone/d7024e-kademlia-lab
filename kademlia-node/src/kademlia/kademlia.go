@@ -17,6 +17,7 @@ type Kademlia interface {
 	FirstSetContainsAllContactsOfSecondSet(first []Contact, second []Contact) bool
 	LookupContact(targetId *KademliaID) ([]Contact, error)
 	LookupData(key *Key) ([]Contact, string, error)
+	Forget(key *Key) error
 }
 
 type KademliaImplementation struct {
@@ -141,6 +142,16 @@ func (kademlia *KademliaImplementation) Join() {
 	}
 
 	kademlia.refresh()
+}
+
+func (kademlia *KademliaImplementation) Forget(key *Key) error {
+	_, ok := kademlia.keyToStopRefreshMap[key.Hash]
+	if !ok {
+		return errors.New("key not found")
+	}
+
+	kademlia.keyToStopRefreshMap[key.Hash] <- true
+	return nil
 }
 
 func (kademlia *KademliaImplementation) Store(content string) (*Key, error) {
