@@ -87,5 +87,6 @@ func (kademliaAPI KademliaAPI) PostObject(ctx *gin.Context) {
 
 	res := HashDTO{Hash: key.GetHashString()}
 
+	ctx.Header("Location", "/objects/"+key.GetHashString())
 	ctx.IndentedJSON(http.StatusCreated, res)
 }
