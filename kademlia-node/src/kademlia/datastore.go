@@ -51,6 +51,10 @@ func (dataStore DataStore) Get(key *Key) (string, error) {
 	if !ok {
 		return "", errors.New("key not found")
 	}
+	err := dataStore.RefreshExpirationTime(key)
+	if err != nil {
+		return "", errors.New("Refresh failed")
+	}
 	return value, nil
 }
 

@@ -20,7 +20,7 @@ const (
 
 func (messageType MessageType) IsValid() error {
 	switch messageType {
-	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA, REFRESH_EXPIRATION_TIME: // Add new messageTypes to the case, so it is seen as a valid type
+	case ERROR, PING, PONG, FIND_NODE, FIND_DATA, STORE, STORE_RESPONSE, FOUND_CONTACTS, FOUND_DATA, REFRESH_EXPIRATION_TIME, EXPIRATION_TIME_HAS_BEEN_REFRESHED: // Add new messageTypes to the case, so it is seen as a valid type
 		return nil
 	}
 	return errors.New("Invalid message type")
