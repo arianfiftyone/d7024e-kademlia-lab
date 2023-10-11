@@ -1,8 +1,11 @@
 package kademlia
 
 import (
+	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/arianfiftyone/src/logger"
 )
 
 // DataStore represents a key-value data store.
@@ -25,6 +28,21 @@ func NewDataStore() DataStore {
 func (dataStore DataStore) Insert(key *Key, value string) {
 	dataStore.time[key.Hash] = dataStore.calculateExpirationTime()
 	dataStore.data[key.Hash] = value
+
+	go dataStore.deleteAfterExpirationTime(dataStore.ttl, key.Hash)
+}
+
+func (dataStore DataStore) deleteAfterExpirationTime(timer time.Duration, hash [KeySize]byte) {
+
+	select {
+	case currTime := <-time.After(timer):
+		differenceInTime := dataStore.time[hash].Sub(currTime)
+		if differenceInTime <= 0 {
+			dataStore.DeleteExpiredData(hash)
+		} else {
+			dataStore.deleteAfterExpirationTime(differenceInTime, hash)
+		}
+	}
 }
 
 // Get retrieves the value associated with a key from the DataStore.
@@ -56,4 +74,11 @@ func (dataStore DataStore) RefreshExpirationTime(key *Key) error {
 	ttl := dataStore.calculateExpirationTime()
 	dataStore.time[key.Hash] = ttl
 	return nil
+}
+
+func (dataStore DataStore) DeleteExpiredData(dataToDelete [KeySize]byte) {
+	value := dataStore.data[dataToDelete]
+	delete(dataStore.time, dataToDelete)
+	delete(dataStore.data, dataToDelete)
+	logger.Log("The data object " + hex.EncodeToString(dataToDelete[:]) + " with the value " + value + " has been deleted due to the expired TTL.")
 }

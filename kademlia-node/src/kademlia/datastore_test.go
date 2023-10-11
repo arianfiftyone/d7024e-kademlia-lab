@@ -114,3 +114,77 @@ func TestRefreshExpirationTime(t *testing.T) {
 
 	assert.Greater(t, newTime, insertedTime.Add(delay))
 }
+
+func TestDeleteExpiredData(t *testing.T) {
+	dataStore := NewDataStore()
+
+	//dataStore.ttl = time.Second * 1
+
+	// Insert a key-value pair
+	value := "testValue"
+	key := NewKey(value)
+
+	dataStore.data[key.Hash] = value
+	dataStore.time[key.Hash] = dataStore.calculateExpirationTime()
+
+	dataStore.DeleteExpiredData(key.Hash)
+
+	//expectedMap := map[[KeySize]byte]string{}
+
+	//assert.Equal(t, expectedMap, dataStore.data)
+}
+
+func TestDeleteExpiredDataInsert(t *testing.T) {
+	dataStore := NewDataStore()
+
+	dataStore.ttl = time.Second * 1
+
+	fmt.Println(dataStore.ttl)
+
+	// Insert a key-value pair
+	value := "testValue"
+	key := NewKey(value)
+	dataStore.Insert(key, value)
+
+	value = "testValue2"
+	key = NewKey(value)
+	dataStore.Insert(key, value)
+
+	value = "testValue3"
+	key = NewKey(value)
+	dataStore.Insert(key, value)
+
+	time.Sleep(time.Second * 5)
+
+	expectedMap := map[[KeySize]byte]string{}
+
+	assert.Equal(t, expectedMap, dataStore.data)
+}
+
+func TestDeleteExpiredDataInsert2(t *testing.T) {
+	dataStore := NewDataStore()
+
+	dataStore.ttl = time.Second * 1
+
+	// Insert a key-value pair
+	value := "testValue"
+	key := NewKey(value)
+	dataStore.Insert(key, value)
+
+	value = "testValue2"
+	key = NewKey(value)
+	dataStore.Insert(key, value)
+
+	dataStore.ttl = time.Second * 10
+	fmt.Println(dataStore.ttl)
+
+	value = "testValue3"
+	key = NewKey(value)
+	dataStore.Insert(key, value)
+
+	time.Sleep(time.Second * 5)
+
+	expectedMap := map[[KeySize]byte]string{key.Hash: value}
+
+	assert.Equal(t, expectedMap, dataStore.data)
+}
