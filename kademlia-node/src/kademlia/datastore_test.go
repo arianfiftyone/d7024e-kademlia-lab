@@ -127,7 +127,7 @@ func TestDeleteExpiredData(t *testing.T) {
 	dataStore.data[key.Hash] = value
 	dataStore.time[key.Hash] = dataStore.calculateExpirationTime()
 
-	dataStore.DeleteExpiredData(key.Hash)
+	dataStore.Delete(key)
 
 	//expectedMap := map[[KeySize]byte]string{}
 
