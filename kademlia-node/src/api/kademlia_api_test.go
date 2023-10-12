@@ -48,6 +48,10 @@ func (KademliaMock *KademliaMock) LookupData(key *kademlia.Key) ([]kademlia.Cont
 	return nil, content, err
 }
 
+func (KademliaMock *KademliaMock) Forget(key *kademlia.Key) error {
+	return nil
+}
+
 func TestGetObjectValidHash(t *testing.T) {
 
 	kademliaMock := new(KademliaMock)

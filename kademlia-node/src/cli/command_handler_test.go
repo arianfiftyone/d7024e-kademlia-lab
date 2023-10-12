@@ -39,6 +39,10 @@ func (KademliaMock *KademliaMock) LookupData(key *kademlia.Key) ([]kademlia.Cont
 	return nil, content, err
 }
 
+func (KademliaMock *KademliaMock) Forget(key *kademlia.Key) error {
+	return nil
+}
+
 // Creates a test Kademlia instance
 func createTestKademlia() *kademlia.KademliaImplementation {
 	kademlia := kademlia.NewKademlia("localhost", 9000, true, "10.0.0.1", 100000)
@@ -349,4 +353,31 @@ func TestCommandError(t *testing.T) {
 
 	output := cli.testCommand(command)
 	assert.Equal(t, commandError, output)
+}
+
+func TestForget(t *testing.T) {
+	value := "kademlia"
+	key := kademlia.NewKey(value)
+
+	cli := NewCli(&KademliaMock{})
+	command := []string{
+		"forget",
+		key.GetHashString(),
+	}
+
+	output := cli.testCommand(command)
+
+	assert.Equal(t, "The data object has stopped being refreshed.", output)
+}
+
+func TestForgetCommand(t *testing.T) {
+	kademliaInstance := createTestKademlia()
+
+	cli := NewCli(kademliaInstance)
+	command := []string{
+		"forget",
+	}
+
+	output := cli.testCommand(command)
+	assert.Equal(t, noArgsError, output)
 }

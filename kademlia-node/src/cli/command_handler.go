@@ -59,7 +59,11 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kadem
 				customErr := fmt.Errorf("error when looking up data %s", err.Error())
 				fmt.Fprintln(output, customErr)
 			} else {
-				fmt.Fprintln(output, "Got content: "+content)
+				if content != "" {
+					fmt.Fprintln(output, "Got content: "+content)
+				} else {
+					fmt.Fprintln(output, "Does not exist.")
+				}
 
 			}
 		} else {
@@ -95,6 +99,28 @@ func (cli *Cli) HandleCommands(output io.Writer, kademliaInstance kademlia.Kadem
 	case "clear", "c":
 		if numArgs == 1 {
 			cli.Clear()
+		} else {
+			fmt.Fprintln(output, noArgsError)
+		}
+
+	case "forget":
+		if numArgs == 2 {
+			kademliaId, err := kademlia.NewKademliaID(commands[1])
+			if err != nil {
+				customErr := fmt.Errorf("error when creating new kademliaID %s", err.Error())
+				fmt.Fprintln(output, customErr)
+				return
+			}
+
+			err = Forget(kademliaInstance, kademlia.GetKeyRepresentationOfKademliaId(kademliaId))
+
+			if err != nil {
+				customErr := fmt.Errorf("error when forgetting data %s", err.Error())
+				fmt.Fprintln(output, customErr)
+			} else {
+				fmt.Fprintln(output, "The data object has stopped being refreshed.")
+			}
+
 		} else {
 			fmt.Fprintln(output, noArgsError)
 		}
@@ -138,4 +164,14 @@ func Kill() {
 func Help(output io.Writer) {
 	text := HelpPrompt()
 	fmt.Fprintln(output, text)
+}
+
+func Forget(kademlia kademlia.Kademlia, key *kademlia.Key) error {
+	err := kademlia.Forget(key)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
